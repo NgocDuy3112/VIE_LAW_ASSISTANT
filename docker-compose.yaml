@@ -1,0 +1,119 @@
+services:
+  valkey-rate-limit:
+    container_name: valkey-rate-limit
+    image: valkey/valkey:8.1.1-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./configs/valkey-rate-limit.conf:/configs/valkey.conf
+      - ./data/valkey-rate-limit:/data
+    environment:
+      - VALKEY_CONFIG=/configs/valkey.conf
+    command: valkey-server /configs/valkey.conf
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - vie-law-assistant
+
+  valkey-cache:
+    container_name: valkey-cache
+    image: valkey/valkey:8.1.1-alpine
+    restart: unless-stopped
+    ports:
+      - "6380:6380"
+    volumes:
+      - ./configs/valkey-cache.conf:/configs/valkey.conf
+      - ./data/valkey-cache:/data
+    environment:
+      - VALKEY_CONFIG=/configs/valkey.conf
+    command: valkey-server /configs/valkey.conf
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - vie-law-assistant
+
+  qdrant:
+    container_name: qdrant
+    image: qdrant/qdrant:v1.14.1
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./data/qdrant:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__STORAGE__PATH=/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - vie-law-assistant
+
+  llm-service:
+    container_name: llm-service
+    build:
+      context: ./services/llm-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./services/llm-service/app:/src/app
+      - ./configs/.env.llm-service:/src/configs/.env
+    environment:
+      - ENV_FILE=/src/configs/.env
+      - PYTHONPATH=/src
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - vie-law-assistant
+    depends_on:
+      valkey-rate-limit:
+        condition: service_healthy
+
+  rag-backend:
+    container_name: rag-backend
+    build:
+      context: ./services/rag-backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/rag-backend/app:/src/app
+      - ./configs/.env.rag-backend:/src/configs/.env
+    environment:
+      - ENV_FILE=/src/configs/.env
+      - PYTHONPATH=/src
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - vie-law-assistant
+    depends_on:
+      valkey-cache:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+networks:
+  vie-law-assistant:
+    driver: bridge
