@@ -6,7 +6,6 @@ from app.dependencies import get_async_qdrant_client  # use the Depends
 
 
 
-
 indexing_router = APIRouter(prefix="/v1/index")
 
 

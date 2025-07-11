@@ -1,8 +1,11 @@
 from qdrant_client import AsyncQdrantClient, models
 from app.helpers.embedding import *
 from app.schemas.document import DocumentSchema
+from app.log.logger import get_logger
 from app.config import QDRANT_CLIENT_URL, QDRANT_COLLECTION_NAME
 
+
+logger = get_logger(__name__)
 
 
 async def indexing_service(

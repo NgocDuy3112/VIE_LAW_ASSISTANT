@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from qdrant_client import AsyncQdrantClient
 from app.helpers.caching import ValkeySemanticCache
 from app.schemas.document import DocumentSchema
-from app.schemas.retrieve_request import RetrieveRequest
+from app.schemas.retrieve import RetrieveRequest
 from app.services.v1.retriever import retriever_service
 from app.dependencies import get_async_qdrant_client, get_valkey_cache
 

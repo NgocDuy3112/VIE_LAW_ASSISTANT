@@ -1,5 +1,6 @@
 import asyncio
 from fastapi import APIRouter, HTTPException, Request
+
 from app.services.chat_completions import create_chat_completion_service
 from app.schemas.message import Message
 from app.api.rate_limit import limiter

@@ -6,7 +6,6 @@ from app.config import EMBEDDING_MODEL_NAME, EMBEDDING_DIMENSION, DEVICE
 
 
 
-
 def embed_document(
     document: DocumentSchema,
     embedding_model: SentenceTransformer = SentenceTransformer(EMBEDDING_MODEL_NAME, truncate_dim=EMBEDDING_DIMENSION, device=DEVICE)
