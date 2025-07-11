@@ -17,17 +17,14 @@ async def create_chat_completion_endpoint(request: Request, body: list[Message])
     """
     Create a chat completion based on the provided messages.
     """
-    logger.info(f"Received chat completion request from {request.client.host}")
     if not body:
-        logger.warning("Empty messages body received.")
+        logger.info()
         raise HTTPException(status_code=400, detail="Messages cannot be empty.")
     try:
         response = await asyncio.wait_for(
             create_chat_completion_service(body),
             timeout=REQUEST_TIMEOUT_SECONDS
         )
-        logger.info("Chat completion response generated successfully.")
         return response
     except asyncio.TimeoutError:
-        logger.error("Chat completion request timed out.")
         raise HTTPException(status_code=504, detail="Request timed out. Please try again later.")

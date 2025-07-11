@@ -16,3 +16,7 @@ RUN apk add --no-cache curl && \
 
 # Copy the rest of the application
 COPY . .
+
+RUN chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
