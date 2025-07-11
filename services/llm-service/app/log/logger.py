@@ -13,7 +13,7 @@ logging.basicConfig(
     stream=sys.stdout
 )
 
-def get_logger(name: str) -> logging.Logger:
+def get_logger(name: str="llm-service") -> logging.Logger:
     """
     Returns a logger with the specified name, using the global configuration.
     """

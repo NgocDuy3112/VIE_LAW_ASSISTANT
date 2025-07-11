@@ -4,7 +4,7 @@ from app.services.chat_completions import create_chat_completion_service
 from app.schemas.message import Message
 from app.api.rate_limit import limiter
 from app.config import NUM_REQUESTS_PER_MINUTE, REQUEST_TIMEOUT_SECONDS
-from app.log.global_logging import get_logger
+from app.log.logger import get_logger
 
 
 logger = get_logger(__name__)

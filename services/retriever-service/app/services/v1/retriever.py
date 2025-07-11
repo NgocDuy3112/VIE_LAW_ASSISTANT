@@ -5,8 +5,11 @@ from app.helpers.caching import ValkeySemanticCache
 from app.helpers.embedding import embed_query
 from app.schemas.document import DocumentSchema
 from app.schemas.retrieve_request import RetrieveRequest
-from app.log.global_logging import logger
+from app.log.logger import get_logger
 from app.config import QDRANT_COLLECTION_NAME
+
+
+logger = get_logger()
 
 
 

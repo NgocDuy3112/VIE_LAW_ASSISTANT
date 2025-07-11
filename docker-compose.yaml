@@ -86,17 +86,17 @@ services:
       valkey-rate-limit:
         condition: service_healthy
 
-  rag-backend:
-    container_name: rag-backend
+  retriver-service:
+    container_name: retriver-service
     build:
-      context: ./services/rag-backend
+      context: ./services/retriver-service
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
-      - ./services/rag-backend/app:/src/app
-      - ./configs/.env.rag-backend:/src/configs/.env
+      - ./services/retriver-service/app:/src/app
+      - ./configs/.env.retriver-service:/src/configs/.env
     environment:
       - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src
