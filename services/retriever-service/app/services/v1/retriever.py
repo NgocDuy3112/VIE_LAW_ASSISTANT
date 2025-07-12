@@ -6,7 +6,7 @@ from app.helpers.embedding import embed_query
 from app.schemas.document import DocumentSchema
 from app.schemas.retriever import RetrieveRequest
 from app.log.logger import get_logger
-from app.config import QDRANT_COLLECTION_NAME
+from app.config import QDRANT_COLLECTION_NAME, QDRANT_CLIENT_URL , SEMANTIC_CACHE_VALKEY_URL
 
 
 logger = get_logger(__name__)
@@ -20,8 +20,8 @@ class HybridRetriever:
     """
     def __init__(
         self,
-        async_qdrant_client: AsyncQdrantClient,
-        valkey_cache: ValkeySemanticCache,
+        async_qdrant_client: AsyncQdrantClient = AsyncQdrantClient(url=QDRANT_CLIENT_URL),
+        valkey_cache: ValkeySemanticCache = ValkeySemanticCache(),
         collection_name: str = QDRANT_COLLECTION_NAME,
         cache_threshold: float = 0.8,
     ):

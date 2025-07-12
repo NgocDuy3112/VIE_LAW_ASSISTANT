@@ -5,18 +5,17 @@ from app.schemas.ask import AskRequest, AskResponse
 from app.services.v1.retriever import HybridRetriever
 from app.helpers.embedding import embed_query
 from app.log.logger import get_logger
-from app.config import *
-from app.dependencies import get_async_qdrant_client, get_valkey_cache
+from app.config import QDRANT_CLIENT_URL, QDRANT_COLLECTION_NAME, LLM_SERVICE_URL
 
 
 logger = get_logger(__name__)
 
 
 
-async def ask_service(
-    async_qdrant_client: AsyncQdrantClient,
-    valkey_cache: ValkeySemanticCache,
-    request: AskRequest
+async def create_ask_service(
+    request: AskRequest,
+    async_qdrant_client: AsyncQdrantClient = AsyncQdrantClient(url=QDRANT_CLIENT_URL),
+    valkey_cache: ValkeySemanticCache = ValkeySemanticCache(),
 ) -> AskResponse:
     logger.info("🚀 ask_service started with question: %s", request.question)
 
@@ -27,8 +26,8 @@ async def ask_service(
     # Step 2: Retrieve top_k docs
     # Step 2: Retrieve top_k docs
     retriever = HybridRetriever(
-        async_valkey_cache=get_valkey_cache(),
-        async_qdrant_client=get_async_qdrant_client(),
+        async_valkey_cache=valkey_cache,
+        async_qdrant_client=async_qdrant_client,
         collection_name=QDRANT_COLLECTION_NAME
     )
     retrieved_docs = await retriever.retrieve(
