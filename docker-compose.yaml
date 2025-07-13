@@ -8,8 +8,6 @@ services:
     volumes:
       - ./configs/valkey-rate-limit.conf:/configs/valkey.conf
       - ./data/valkey-rate-limit:/data
-    environment:
-      - VALKEY_CONFIG=/configs/valkey.conf
     command: valkey-server /configs/valkey.conf
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
@@ -18,6 +16,9 @@ services:
       retries: 3
     networks:
       - vie-law-assistant
+    profiles:
+      - developer
+      - production
 
   valkey-cache:
     container_name: valkey-cache
@@ -28,8 +29,6 @@ services:
     volumes:
       - ./configs/valkey-cache.conf:/configs/valkey.conf
       - ./data/valkey-cache:/data
-    environment:
-      - VALKEY_CONFIG=/configs/valkey.conf
     command: valkey-server /configs/valkey.conf
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
@@ -38,6 +37,9 @@ services:
       retries: 3
     networks:
       - vie-law-assistant
+    profiles:
+      - developer
+      - production
 
   qdrant:
     container_name: qdrant
@@ -52,67 +54,69 @@ services:
       - QDRANT__SERVICE__HTTP_PORT=6333
       - QDRANT__SERVICE__GRPC_PORT=6334
       - QDRANT__STORAGE__PATH=/qdrant/storage
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     networks:
       - vie-law-assistant
+    profiles:
+      - developer
+      - production
 
   llm-service:
     container_name: llm-service
     build:
       context: ./services/llm-service
-      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "8001:8001"
+      - "8001:8000"
     volumes:
       - ./services/llm-service/app:/src/app
       - ./configs/.env.llm-service:/src/configs/.env
     environment:
-      - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - vie-law-assistant
-    depends_on:
-      valkey-rate-limit:
-        condition: service_healthy
-
-  retriver-service:
-    container_name: retriver-service
-    build:
-      context: ./services/retriver-service
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./services/retriver-service/app:/src/app
-      - ./configs/.env.retriver-service:/src/configs/.env
-    environment:
-      - ENV_FILE=/src/configs/.env
-      - PYTHONPATH=/src
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    entrypoint: /src/entrypoint.sh
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+    depends_on:
+      valkey-rate-limit:
+        condition: service_healthy
     networks:
       - vie-law-assistant
+    profiles:
+      - developer
+      - production
+
+  retriever-service:
+    container_name: retriever-service
+    build:
+      context: ./services/retriever-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/retriever-service/app:/src/app
+      - ./configs/.env.retriever-service:/src/configs/.env
+    environment:
+      - PYTHONPATH=/src
+    entrypoint: /src/entrypoint.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     depends_on:
+      valkey-rate-limit:
+        condition: service_healthy
       valkey-cache:
         condition: service_healthy
-      qdrant:
-        condition: service_healthy
+      llm-service:
+        condition: service_started
+    networks:
+      - vie-law-assistant
+    profiles:
+      - developer
+      - production
 
 networks:
   vie-law-assistant:

@@ -1,22 +1,29 @@
-FROM python:alpine
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-WORKDIR /app
+WORKDIR /src
 
-# Copy requirements first for better caching
+# Install system deps
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first (for caching)
 COPY requirements.txt .
 
-# Install dependencies and curl for healthcheck
-RUN apk add --no-cache curl && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
-COPY . .
+# Copy app folder content into /src/app
+COPY app/ .
 
-RUN chmod +x /app/entrypoint.sh
+# Copy entrypoint.sh directly into /src/app
+COPY entrypoint.sh .
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+RUN chmod +x /src/entrypoint.sh
+
+ENTRYPOINT ["/src/entrypoint.sh"]
