@@ -4,7 +4,7 @@ from qdrant_client import AsyncQdrantClient
 
 from app.helpers.caching import ValkeySemanticCache
 from app.schemas.ask import AskRequest, AskResponse
-from app.service.v1.ask import create_ask_service
+from app.core.v1.ask import create_ask_service
 from app.dependencies import get_async_qdrant_client, get_valkey_cache
 from app.api.rate_limit import limiter
 from app.config import NUM_REQUESTS_PER_MINUTE, REQUEST_TIMEOUT_SECONDS

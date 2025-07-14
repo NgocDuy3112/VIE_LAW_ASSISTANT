@@ -3,7 +3,7 @@ import tempfile
 import shutil
 from qdrant_client import AsyncQdrantClient
 from app.schemas.document import DocumentSchema
-from app.service.v1.indexing import create_indexing_service, create_indexing_service_from_pdf
+from app.core.v1.indexing import create_indexing_service, create_indexing_service_from_pdf
 from app.dependencies import get_async_qdrant_client  # use the Depends
 
 

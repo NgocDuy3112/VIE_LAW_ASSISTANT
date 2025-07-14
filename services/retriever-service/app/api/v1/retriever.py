@@ -3,7 +3,7 @@ from qdrant_client import AsyncQdrantClient
 from app.helpers.caching import ValkeySemanticCache
 from app.schemas.document import DocumentSchema
 from app.schemas.retriever import RetrieveRequest
-from app.service.v1.retriever import retriever_service
+from app.core.v1.retriever import retriever_service
 from app.dependencies import get_async_qdrant_client, get_valkey_cache
 
 
