@@ -11,9 +11,9 @@ services:
     command: valkey-server /configs/valkey.conf
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 6
     networks:
       - vie-law-assistant
     profiles:
@@ -32,9 +32,9 @@ services:
     command: valkey-server /configs/valkey.conf
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 6
     networks:
       - vie-law-assistant
     profiles:
@@ -75,9 +75,9 @@ services:
     entrypoint: /src/entrypoint.sh
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       valkey-rate-limit:
         condition: service_healthy
@@ -102,9 +102,9 @@ services:
     entrypoint: /src/entrypoint.sh
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       valkey-rate-limit:
         condition: service_healthy
