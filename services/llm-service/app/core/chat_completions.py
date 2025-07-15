@@ -14,5 +14,5 @@ async def create_chat_completion_service(messages: list[Message], model=MODEL_NA
     output = response.choices[0].message
     return Message(
         role=output.role,
-        content={"content": output.content}
+        content=[{"type": "text", "text": output.content}]
     )

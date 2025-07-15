@@ -3,7 +3,6 @@ import asyncio
 from fastapi import status
 from aiohttp import ClientSession
 from unittest.mock import patch, AsyncMock
-from app.main import app
 from app.schemas.message import Message
 
 

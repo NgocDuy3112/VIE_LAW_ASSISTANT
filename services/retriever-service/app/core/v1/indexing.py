@@ -46,7 +46,7 @@ async def create_indexing_service(
         collection_name=QDRANT_COLLECTION_NAME,
         points=[
             models.PointStruct(
-                id=document.id,
+                id=str(document.id),
                 payload=document.metadata,
                 vector=vector
             )
@@ -83,7 +83,7 @@ async def create_indexing_service_from_pdf(
             collection_name=QDRANT_COLLECTION_NAME,
             points=[
                 models.PointStruct(
-                    id=document.id,
+                    id=str(document.id),
                     payload=payload,
                     vector=vector
                 )

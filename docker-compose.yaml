@@ -13,7 +13,7 @@ services:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 6
+      retries: 3
     networks:
       - vie-law-assistant
     profiles:
@@ -34,7 +34,7 @@ services:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 6
+      retries: 3
     networks:
       - vie-law-assistant
     profiles:
@@ -66,21 +66,21 @@ services:
       context: ./services/llm-service
     restart: unless-stopped
     ports:
-      - "8001:8000"
+      - "8001:8001"
     volumes:
       - ./services/llm-service/app:/src/app
       - ./configs/.env.llm-service:/src/configs/.env
     environment:
+      - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src
     entrypoint: /src/entrypoint.sh
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 10s
       timeout: 5s
-      retries: 6
+      retries: 3
     depends_on:
-      valkey-rate-limit:
-        condition: service_healthy
+      - valkey-rate-limit
     networks:
       - vie-law-assistant
     profiles:
@@ -98,20 +98,18 @@ services:
       - ./services/retriever-service/app:/src/app
       - ./configs/.env.retriever-service:/src/configs/.env
     environment:
+      - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src
     entrypoint: /src/entrypoint.sh
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
-      retries: 6
+      retries: 3
     depends_on:
-      valkey-rate-limit:
-        condition: service_healthy
-      valkey-cache:
-        condition: service_healthy
-      llm-service:
-        condition: service_started
+      - qdrant
+      - valkey-rate-limit
+      - valkey-cache
     networks:
       - vie-law-assistant
     profiles:

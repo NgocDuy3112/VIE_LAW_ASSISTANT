@@ -3,7 +3,6 @@ pydantic==2.8.0
 slowapi==0.1.9
 aiohttp==3.12.14
 openai==1.92.2
-groq==0.29.0
 valkey==6.1.0
 pytest==8.4.1
 pytest-asyncio==1.0.0
