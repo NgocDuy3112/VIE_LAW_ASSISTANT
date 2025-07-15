@@ -1,7 +1,7 @@
 import hashlib
 import pymupdf4llm
 from app.schemas.document import DocumentSchema
-from langchain_text_splitters import CharacterTextSplitter
+from helpers.text_splitter import CharacterTextSplitter
 
 
 def calculate_content_hash(content: str) -> str:
