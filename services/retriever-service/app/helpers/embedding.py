@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
-from app.schemas.document import DocumentSchema
 
+from app.schemas.document import DocumentSchema
 from app.config import EMBEDDING_MODEL_NAME, EMBEDDING_DIMENSION, DEVICE
 
 

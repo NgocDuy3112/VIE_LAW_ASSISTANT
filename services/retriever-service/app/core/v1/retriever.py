@@ -6,14 +6,14 @@ from app.helpers.embedding import embed_query
 from app.schemas.document import DocumentSchema
 from app.schemas.retriever import RetrieveRequest
 from app.log.logger import get_logger
-from app.config import QDRANT_COLLECTION_NAME, QDRANT_CLIENT_URL , SEMANTIC_CACHE_VALKEY_URL
+from app.config import QDRANT_COLLECTION_NAME, QDRANT_CLIENT_URL
 
 
 logger = get_logger(__name__)
 
 
 
-class HybridRetriever:
+class Retriever:
     """
     Retriever: first check Valkey semantic cache, then fallback to Qdrant.
     Returns validated DocumentSchema objects.
@@ -86,7 +86,7 @@ async def retriever_service(
     valkey_cache: ValkeySemanticCache, 
     request: RetrieveRequest
 ) -> list[DocumentSchema]:
-    retriever = HybridRetriever(async_qdrant_client, valkey_cache)
+    retriever = Retriever(async_qdrant_client, valkey_cache)
     embedding = embed_query(request.query)
     documents = retriever.retrieve(embedding, request.top_k)
     return documents
