@@ -12,6 +12,9 @@ async def create_chat_completion_service(messages: list[Message], model=MODEL_NA
         messages=[msg.model_dump() for msg in messages]
     )
     output = response.choices[0].message
+    # Check if the output has the token <think></think> and remove it
+    if "<think>" in output.content:
+        output.content = output.content.replace("<think>", "").replace("</think>", "")
     return Message(
         role=output.role,
         content=[{"type": "text", "text": output.content}]

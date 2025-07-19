@@ -1,8 +1,9 @@
 import numpy as np
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.models import Filter
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 from app.helpers.caching import ValkeySemanticCache
 from app.helpers.embedding import embed_query
+from app.helpers.extract_keywords import extract_keywords_vietnamese
 from app.schemas.document import DocumentSchema
 from app.schemas.retriever import RetrieveRequest
 from app.log.logger import get_logger
@@ -81,6 +82,19 @@ class Retriever:
 
 
 
+def build_keyword_inclusion_filter(keywords: list[str], field_name="content") -> Filter:
+    return Filter(
+        must=[
+            FieldCondition(
+                key=field_name,
+                match=MatchValue(value=kw)
+            )
+            for kw in keywords
+        ]
+    )
+
+
+
 async def retriever_service(
     async_qdrant_client: AsyncQdrantClient, 
     valkey_cache: ValkeySemanticCache, 
@@ -88,5 +102,7 @@ async def retriever_service(
 ) -> list[DocumentSchema]:
     retriever = Retriever(async_qdrant_client, valkey_cache)
     embedding = embed_query(request.query)
-    documents = retriever.retrieve(embedding, request.top_k)
+    include_keywords = extract_keywords_vietnamese(request.query)
+    include_filter = build_keyword_inclusion_filter(include_keywords)
+    documents = retriever.retrieve(embedding, request.top_k, include_filter)
     return documents
