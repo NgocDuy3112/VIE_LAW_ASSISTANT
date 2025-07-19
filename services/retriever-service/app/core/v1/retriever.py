@@ -3,7 +3,7 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 from app.helpers.caching import ValkeySemanticCache
 from app.helpers.embedding import embed_query
-from app.helpers.extract_keywords import extract_keywords_vietnamese
+from app.helpers.extract_keywords import extract_legal_keywords
 from app.schemas.document import DocumentSchema
 from app.schemas.retriever import RetrieveRequest
 from app.log.logger import get_logger
@@ -102,7 +102,7 @@ async def retriever_service(
 ) -> list[DocumentSchema]:
     retriever = Retriever(async_qdrant_client, valkey_cache)
     embedding = embed_query(request.query)
-    include_keywords = extract_keywords_vietnamese(request.query)
+    include_keywords = extract_legal_keywords(request.query)
     include_filter = build_keyword_inclusion_filter(include_keywords)
-    documents = retriever.retrieve(embedding, request.top_k, include_filter)
+    documents = await retriever.retrieve(embedding, request.top_k, include_filter)
     return documents
