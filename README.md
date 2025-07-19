@@ -14,6 +14,7 @@ Microservices Architecture: Decoupled services for LLM and retriever, orchestrat
 ├── configs/                    # Valkey configuration files
 ├── data/
 │   ├── pdfs/                   # Source PDFs for ingestion
+|   ├── qdrant/                 # Vector DB
 │   └── valkey-cache/           # Valkey data for caching
 │   └── valkey-rate-limit/      # Valkey data for rate limiting
 ├── services/
