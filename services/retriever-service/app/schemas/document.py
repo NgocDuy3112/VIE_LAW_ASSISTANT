@@ -6,6 +6,8 @@ from uuid import UUID, uuid4
 class DocumentSchema(BaseModel):
     id: str = Field(default_factory=uuid4, description="Unique identifier for the document")
     metadata: dict = Field(default_factory=dict, description="Metadata associated with the document")
+    type: str = Field(description="Type of the document, e.g., 'pdf', 'web', etc.")
+    source: str = Field(description="Source of the document, e.g., URL or file path")
 
     @field_validator("metadata", mode="wrap")
     @classmethod

@@ -90,5 +90,4 @@ async def create_indexing_service_from_pdf(
             ]
         )
         indexed_docs.append(document)
-
     return indexed_docs
