@@ -7,10 +7,10 @@ from app.schemas.chat_history import *
 from app.db.dependencies import get_postgresql_async_session
 
 
-router = APIRouter("/chat-history", tags=["Chat History"])
+chat_history_router = APIRouter("/chat-history", tags=["Chat History"])
 
 
-@router.post("/", status_code=201)
+@chat_history_router.post("/", status_code=201)
 async def create_chat_history_endpoint(request: ChatHistoryRequest, db: AsyncSession = Depends(get_postgresql_async_session)):
     repo = ChatHistoryRepository(db)
     await repo.create(request)
@@ -18,7 +18,7 @@ async def create_chat_history_endpoint(request: ChatHistoryRequest, db: AsyncSes
 
 
 
-@router.get("/", response_model=list[ChatHistoryResponse])
+@chat_history_router.get("/", response_model=list[ChatHistoryResponse])
 async def get_chat_history_endpoint(
     user_id: UUID | None = None, 
     session_id: UUID | None = None, 
@@ -29,12 +29,12 @@ async def get_chat_history_endpoint(
 
 
 
-@router.delete("/", status_code=204)
+@chat_history_router.delete("/", status_code=204)
 async def delete_chat_history_endpoint(
     user_id: UUID | None = None, 
     session_id: UUID | None = None, 
     db: AsyncSession = Depends(get_postgresql_async_session)
 ):
     repo = ChatHistoryRepository(db)
-    deleted_count = await repo.delete_chat_history(user_id, session_id)
+    await repo.delete_chat_history(user_id, session_id)
     return {"message": "Chat history deleted successfully"}
