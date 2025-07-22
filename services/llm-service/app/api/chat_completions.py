@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import APIRouter, HTTPException, Request
 
-from app.core.chat_completions import create_chat_completion_service
+from app.core.chat_completions import create_chat_completion
 from app.schemas.message import Message
 from app.api.rate_limit import limiter
 from app.config import NUM_REQUESTS_PER_MINUTE, REQUEST_TIMEOUT_SECONDS
@@ -23,7 +23,7 @@ async def create_chat_completion_endpoint(request: Request, body: list[Message])
         raise HTTPException(status_code=400, detail="Messages cannot be empty.")
     try:
         response = await asyncio.wait_for(
-            create_chat_completion_service(body),
+            create_chat_completion(body),
             timeout=REQUEST_TIMEOUT_SECONDS
         )
         return response

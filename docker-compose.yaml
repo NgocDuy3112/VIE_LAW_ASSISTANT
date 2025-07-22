@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - vie-law-assistant
+      - vie-law-assistant-network
     profiles:
       - developer
       - production
@@ -36,7 +36,30 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - vie-law-assistant
+      - vie-law-assistant-network
+    profiles:
+      - developer
+      - production
+  
+  postgresql-chat-history:
+    container_name: postgresql-chat-history
+    image: postgres:17.5-bullseye
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: chatdb
+    networks:
+      - vie-law-assistant-network
+    volumes:
+      - ./data/postgresql/chatdb:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d chatdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     profiles:
       - developer
       - production
@@ -55,7 +78,7 @@ services:
       - QDRANT__SERVICE__GRPC_PORT=6334
       - QDRANT__STORAGE__PATH=/qdrant/storage
     networks:
-      - vie-law-assistant
+      - vie-law-assistant-network
     profiles:
       - developer
       - production
@@ -80,9 +103,10 @@ services:
       timeout: 5s
       retries: 3
     depends_on:
+      - postgresql-chat-history
       - valkey-rate-limit
     networks:
-      - vie-law-assistant
+      - vie-law-assistant-network
     profiles:
       - developer
       - production
@@ -111,11 +135,11 @@ services:
       - valkey-rate-limit
       - valkey-cache
     networks:
-      - vie-law-assistant
+      - vie-law-assistant-network
     profiles:
       - developer
       - production
 
 networks:
-  vie-law-assistant:
+  vie-law-assistant-network:
     driver: bridge

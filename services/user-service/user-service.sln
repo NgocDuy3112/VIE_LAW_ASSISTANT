@@ -1,31 +1,28 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "services", "services", "{5854FF58-B8C5-05C6-5BF2-ACE42193F22B}"
+
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserServiceApi", "UserServiceApi\UserServiceApi.csproj", "{D3078754-12F2-4E15-05AE-040B06E068BB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "user-service", "user-service", "{894F4CE1-B484-F744-A4B2-6323977B165A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserServiceApi", "services\user-service\UserServiceApi\UserServiceApi.csproj", "{D3078754-12F2-4E15-05AE-040B06E068BB}"
-EndProject
+
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
+
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D3078754-12F2-4E15-05AE-040B06E068BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D3078754-12F2-4E15-05AE-040B06E068BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3078754-12F2-4E15-05AE-040B06E068BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3078754-12F2-4E15-05AE-040B06E068BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
+
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{894F4CE1-B484-F744-A4B2-6323977B165A} = {5854FF58-B8C5-05C6-5BF2-ACE42193F22B}
-		{D3078754-12F2-4E15-05AE-040B06E068BB} = {894F4CE1-B484-F744-A4B2-6323977B165A}
-	EndGlobalSection
+
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6ED5204B-CC75-4902-9665-FBCF4AD3D53C}
 	EndGlobalSection
