@@ -16,7 +16,7 @@ class ChatHistoryRequest(BaseChatHistory):
     timestamp: datetime = Field(default_factory=datetime.now, description="The time when the question was asked")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 
@@ -27,4 +27,4 @@ class ChatHistoryResponse(BaseChatHistory):
     timestamp: datetime = Field(..., description="The time when the question was asked")
 
     class Config:
-        orm_mode = True
+        from_attributes = True

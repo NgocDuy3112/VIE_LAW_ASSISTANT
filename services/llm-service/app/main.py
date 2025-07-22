@@ -11,19 +11,6 @@ from app.db.async_postgres import AsyncPostgresDatabase
 
 
 
-app = FastAPI(title="LLM Service", version="1.0.0", root_path="/llm-service")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Adjust this to your needs
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-app.include_router(chat_completions_router)
-app.include_router(health_router, tags=["Health Check"])
-
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
@@ -57,6 +44,19 @@ async def lifespan(app: FastAPI):
             await app.state.engine.dispose()
             print("🛑 SQLAlchemy async engine disposed.")
 
+
+
+
+app = FastAPI(title="LLM Service", version="1.0.0", root_path="/llm-service")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust this to your needs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.include_router(chat_completions_router)
+app.include_router(health_router, tags=["Health Check"])
 
 
 

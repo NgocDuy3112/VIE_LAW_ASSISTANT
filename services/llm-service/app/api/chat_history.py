@@ -7,7 +7,7 @@ from app.schemas.chat_history import *
 from app.db.dependencies import get_postgresql_async_session
 
 
-chat_history_router = APIRouter("/chat-history", tags=["Chat History"])
+chat_history_router = APIRouter(prefix="/chat-history", tags=["Chat History"])
 
 
 @chat_history_router.post("/", status_code=201)
