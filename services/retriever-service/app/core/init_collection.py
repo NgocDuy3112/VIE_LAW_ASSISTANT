@@ -1,5 +1,5 @@
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.models import VectorParams, Distance
+from qdrant_client.models import VectorParams, Distance, Datatype
 from app.config import QDRANT_CLIENT_URL, QDRANT_COLLECTION_NAME, EMBEDDING_DIMENSION
 
 
@@ -21,7 +21,8 @@ async def init_qdrant_collection():
                 collection_name=QDRANT_COLLECTION_NAME,
                 vectors_config=VectorParams(
                     size=EMBEDDING_DIMENSION,
-                    distance=Distance.COSINE
+                    distance=Distance.COSINE,
+                    datatype=Datatype.FLOAT16
                 )
             )
             logger.info(f"✅ Collection '{QDRANT_COLLECTION_NAME}' created successfully")

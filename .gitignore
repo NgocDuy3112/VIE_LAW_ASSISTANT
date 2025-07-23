@@ -3,6 +3,7 @@ configs/
 data/
 logging/
 notebooks/
+sql/
 .vscode/
 .DS_Store
 
