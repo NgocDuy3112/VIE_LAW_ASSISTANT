@@ -7,6 +7,7 @@ from app.helpers.embedding import embed_query  # your embedding function
 from app.config import *
 
 
+
 class ChatHistoryRepository:
     def __init__(self, db: AsyncSession):
         self.db = db

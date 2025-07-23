@@ -56,6 +56,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(chat_completions_router)
+app.include_router(chat_history_router)
 app.include_router(health_router, tags=["Health Check"])
 
 
