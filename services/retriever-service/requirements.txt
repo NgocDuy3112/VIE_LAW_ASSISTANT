@@ -3,7 +3,7 @@ pydantic==2.8.0
 aiohttp==3.12.14
 slowapi==0.1.9
 
-qdrant-client==1.14.1
+qdrant-client==1.15.0
 valkey==6.1.0
 
 sentence-transformers==4.1.0

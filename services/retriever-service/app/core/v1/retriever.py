@@ -1,6 +1,6 @@
 import numpy as np
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.models import Filter, FieldCondition, MatchValue
+from qdrant_client.models import *
 from app.helpers.caching import ValkeySemanticCache
 from app.helpers.embedding import embed_query
 from app.helpers.extract_keywords import extract_legal_keywords
@@ -51,13 +51,16 @@ class Retriever:
 
         logger.info("❌ Cache miss → querying Qdrant...")
 
-        qdrant_results = await self.qdrant.search(
+        qdrant_results = await self.qdrant.query_points(
             collection_name=self.collection,
-            query_vector=query_embedding.tolist(),
+            query=query_embedding.tolist(),
             limit=top_k,
             with_payload=True,
             with_vectors=False,
-            filter=filter
+            query_filter=filter,
+            search_params=SearchParams(
+                quantization=models.QuantizationSearchParams(oversampling=2)
+            )
         )
 
         docs: list[DocumentSchema] = []
@@ -84,10 +87,10 @@ class Retriever:
 
 def build_keyword_inclusion_filter(keywords: list[str], field_name="content") -> Filter:
     return Filter(
-        must=[
+        should=[
             FieldCondition(
                 key=field_name,
-                match=MatchValue(value=kw)
+                match=MatchPhrase(phrase=kw)
             )
             for kw in keywords
         ]
