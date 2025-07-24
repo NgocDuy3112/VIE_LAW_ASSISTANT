@@ -6,7 +6,7 @@ slowapi==0.1.9
 qdrant-client==1.15.0
 valkey==6.1.0
 
-sentence-transformers==4.1.0
+sentence-transformers==5.0.0
 pymupdf4llm==0.0.25
 
 pytest==8.4.1
