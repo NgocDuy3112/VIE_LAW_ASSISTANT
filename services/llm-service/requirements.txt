@@ -9,5 +9,7 @@ asyncpg==0.30.0
 pgvector==0.4.1
 sqlmodel==0.0.24
 
+sentence-transformers==5.0.0
+
 pytest==8.4.1
 pytest-asyncio==1.0.0
