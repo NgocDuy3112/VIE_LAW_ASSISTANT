@@ -2,7 +2,7 @@ import aiohttp
 from qdrant_client import AsyncQdrantClient
 from app.helpers.caching import ValkeySemanticCache
 from app.schemas.ask import AskRequest, AskResponse
-from app.core.v1.retriever import HybridRetriever
+from app.core.v1.retriever import Retriever
 from app.helpers.embedding import embed_query
 from app.log.logger import get_logger
 from app.config import QDRANT_CLIENT_URL, QDRANT_COLLECTION_NAME, LLM_SERVICE_URL
@@ -24,8 +24,7 @@ async def create_ask_service(
     logger.debug("✅ Embedding generated: %s...", str(query_embedding)[:60])
 
     # Step 2: Retrieve top_k docs
-    # Step 2: Retrieve top_k docs
-    retriever = HybridRetriever(
+    retriever = Retriever(
         async_valkey_cache=valkey_cache,
         async_qdrant_client=async_qdrant_client,
         collection_name=QDRANT_COLLECTION_NAME

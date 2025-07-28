@@ -10,7 +10,6 @@ Base = declarative_base()
 
 class ChatHistory(Base):
     __tablename__ = "chat_history"
-
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     user_id = Column(UUID(as_uuid=True), nullable=False, index=True)

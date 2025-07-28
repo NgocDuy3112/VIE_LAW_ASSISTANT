@@ -12,7 +12,7 @@ class ChatHistoryRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, request: ChatHistoryRequest):
+    async def add_history(self, request: ChatHistoryRequest):
         # Embed the question
         embedding = embed_query(request.question)
         query = text("""
@@ -34,10 +34,12 @@ class ChatHistoryRepository:
     async def get_chat_history(
         self,
         user_id: UUID | None = None,
-        session_id: UUID | None = None
+        session_id: UUID | None = None,
+        limit: int | None = None
     ) -> list[ChatHistoryResponse]:
         conditions = []
-        params = {}
+        params = {"limit": limit}
+        params["limit"] = limit if limit else 3
         if user_id:
             conditions.append("user_id = :user_id")
             params["user_id"] = user_id
@@ -51,7 +53,9 @@ class ChatHistoryRepository:
             FROM chat_history
             WHERE {where_clause}
             ORDER BY timestamp DESC
+            LIMIT :limit
         """)
+
         result = await self.db.execute(query, params)
         rows = result.fetchall()
         if not rows:

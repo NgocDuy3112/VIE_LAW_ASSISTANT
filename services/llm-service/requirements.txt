@@ -4,6 +4,8 @@ slowapi==0.1.9
 aiohttp==3.12.14
 openai==1.92.2
 
+python-jose[cryptography]==3.5.0
+
 valkey==6.1.0
 asyncpg==0.30.0
 pgvector==0.4.1

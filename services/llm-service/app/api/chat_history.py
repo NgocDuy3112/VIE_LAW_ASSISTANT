@@ -6,7 +6,7 @@ from datetime import datetime
 from app.core.chat_history import ChatHistoryRepository
 from app.schemas.chat_history import ChatHistoryRequest, ChatHistoryResponse
 from app.db.dependencies import get_postgresql_async_session
-from app.auth import get_current_user  # Returns UUID
+from app.auth import get_current_user
 
 
 chat_history_router = APIRouter(
