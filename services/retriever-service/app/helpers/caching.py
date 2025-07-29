@@ -4,15 +4,13 @@ import hashlib
 from valkey.asyncio import Valkey as AsyncValkey
 
 
-
-
 class ValkeySemanticCache:
     """
     Simple semantic cache using Valkey.
     Stores embeddings as JSON and payload as value.
     """
 
-    def __init__(self, host="localhost", port=6380, db=0, cache_prefix="semantic_cache", threshold=0.8):
+    def __init__(self, host="valkey-cache", port=6380, db=0, cache_prefix="semantic_cache", threshold=0.8):
         self.client = AsyncValkey(host=host, port=port, db=db, decode_responses=True)
         self.prefix = cache_prefix
         self.threshold = threshold
@@ -54,6 +52,29 @@ class ValkeySemanticCache:
                     best_payload = obj["payload"]
 
         return best_payload
+
+    async def search(self, query_embedding: np.ndarray, top_k: int = 5) -> list[dict]:
+        """
+        Return top_k cached results above threshold based on cosine similarity.
+        Each result is a dict: { "score": float, "payload": dict }
+        """
+        keys = await self.client.keys(f"{self.prefix}:*")
+        scored_results = []
+
+        for key in keys:
+            raw = await self.client.get(key)
+            if raw:
+                obj = json.loads(raw)
+                cached_emb = np.array(obj["embedding"])
+                score = self._cosine_similarity(query_embedding, cached_emb)
+                if score > self.threshold:
+                    scored_results.append({
+                        "score": score,
+                        "payload": obj["payload"]
+                    })
+
+        # Sort by score descending and return top_k
+        return sorted(scored_results, key=lambda x: x["score"], reverse=True)[:top_k]
 
     def _cosine_similarity(self, a: np.ndarray, b: np.ndarray) -> float:
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-10)

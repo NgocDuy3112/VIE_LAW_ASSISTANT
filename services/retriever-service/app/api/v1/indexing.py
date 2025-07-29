@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, HTTPException, File, Depends
 from qdrant_client import AsyncQdrantClient
 import tempfile
 import shutil
+import os
 
 from app.schemas.document import DocumentSchema
 from app.core.v1.indexing import create_indexing_service, create_indexing_service_from_pdf
@@ -34,10 +35,22 @@ async def index_pdf(
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-            shutil.copyfileobj(file.file, tmp)
-            tmp_path = tmp.name
-        documents = await create_indexing_service_from_pdf(tmp_path, async_qdrant_client)
-        return documents
+        # Create a temporary directory
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            file_name = file.filename
+            # Save the file using its original filename
+            tmp_path = os.path.join(tmp_dir, file_name)
+            with open(tmp_path, "wb") as tmp_file:
+                shutil.copyfileobj(file.file, tmp_file)
+
+            # Pass the path and original filename to your service
+            documents = await create_indexing_service_from_pdf(
+                pdf_file=tmp_path,
+                async_qdrant_client=async_qdrant_client
+            )
+            for document in documents:
+                document.metadata["source"] = file_name
+            return documents
+
     finally:
         file.file.close()

@@ -43,19 +43,25 @@ class Retriever:
     ) -> list[DocumentSchema]:
         logger.debug("Starting retrieval: top_k=%d, filter=%s", top_k, filter)
 
+        # Attempt to retrieve cached documents
         cached_docs = await self.cache.search(dense_vector, top_k=top_k)
+
         if cached_docs:
             logger.info("✅ Cache hit: retrieved %d docs from Valkey", len(cached_docs))
-            return [
-                DocumentSchema(
-                    id=doc.get("metadata", {}).get("id", ""),
-                    metadata=doc["metadata"]
-                ) for doc in cached_docs
-            ]
+            documents = []
+            for item in cached_docs:
+                metadata = item.get("payload", {}).get("metadata", {})
+                documents.append(
+                    DocumentSchema(
+                        id=metadata.get("id", ""),
+                        metadata=metadata
+                    )
+                )
+            return documents
 
         logger.info("❌ Cache miss → querying Qdrant...")
 
-        qdrant_results = await self.qdrant.query_points(
+        result = await self.qdrant.query_points(
             collection_name=self.collection,
             prefetch=[
                 Prefetch(
@@ -78,23 +84,22 @@ class Retriever:
                 quantization=models.QuantizationSearchParams(oversampling=2)
             )
         )
-
+        points = result.points
         docs: list[DocumentSchema] = []
-        for point in qdrant_results:
-            payload = point.payload or {}
+        for hit in points:
             doc = DocumentSchema(
-                id=str(payload.get("id", "")),
-                metadata=payload
+                id=hit.id,
+                metadata=hit.payload
             )
             docs.append(doc)
-            logger.debug("Retrieved doc ID=%s from Qdrant", doc.id)
+            logger.debug("Retrieved doc ID=%s from Qdrant", id)
 
             await self.cache.set(
-                text=payload.get("content", ""),
+                text=hit.payload.get("content", ""),
                 embedding=dense_vector,
-                payload=payload
+                payload=hit.payload
             )
-            logger.debug("Added doc ID=%s to Valkey cache", doc.id)
+            logger.debug("Added doc ID=%s to Valkey cache", id)
 
         logger.info("✅ Qdrant returned %d docs", len(docs))
         return docs

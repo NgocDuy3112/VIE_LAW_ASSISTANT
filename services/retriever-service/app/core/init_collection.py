@@ -27,12 +27,14 @@ async def init_qdrant_collection(collection_name: str = QDRANT_COLLECTION_NAME) 
                     )
                 },
                 sparse_vectors_config={
-                    "text-sparse": models.SparseVectorParams(on_disk=True),
+                    "text-sparse": SparseVectorParams(
+                        index=SparseIndexParams(on_disk=True)
+                    ),
                 },
-                quantization_config=models.BinaryQuantization(
-                    binary=models.BinaryQuantizationConfig(
-                        encoding=models.BinaryQuantizationEncoding.TWO_BITS,
-                        query_encoding=models.BinaryQuantizationQueryEncoding.BINARY,
+                quantization_config=BinaryQuantization(
+                    binary=BinaryQuantizationConfig(
+                        encoding=BinaryQuantizationEncoding.TWO_BITS,
+                        query_encoding=BinaryQuantizationQueryEncoding.BINARY,
                         always_ram=False,
                     ),
                 ),

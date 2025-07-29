@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from qdrant_client import AsyncQdrantClient
 
 from app.helpers.caching import ValkeySemanticCache
@@ -15,22 +15,25 @@ logger = get_logger(__name__)
 ask_router = APIRouter(prefix="/v1/ask")
 
 
+
 @ask_router.post("/", response_model=AskResponse)
 @limiter.limit(f"{NUM_REQUESTS_PER_MINUTE}/minute")
 async def ask(
-    request: AskRequest,
+    request: Request,
+    body: AskRequest,
     async_qdrant_client: AsyncQdrantClient = Depends(get_async_qdrant_client),
     valkey_cache: ValkeySemanticCache = Depends(get_valkey_cache)
 ) -> AskResponse:
     """
-    Create a chat completion based on the provided messages.
+    Retrieve legal answers based on question and context from Qdrant.
     """
-    if not request.messages:
-        logger.info("AskRequest messages field is empty.")
-        raise HTTPException(status_code=400, detail="Messages cannot be empty.")
+    if not body.question or not body.question.strip():
+        logger.info("AskRequest 'question' is empty.")
+        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+    
     try:
         response = await asyncio.wait_for(
-            create_ask_service(request, async_qdrant_client, valkey_cache),
+            create_ask_service(body, async_qdrant_client, valkey_cache),
             timeout=REQUEST_TIMEOUT_SECONDS
         )
         return response

@@ -19,9 +19,10 @@ class PDFProcessor:
         paragraphs = self.text_splitter.split_text(md_text)
         for paragraph in paragraphs:
             document = DocumentSchema()
-            document.metadata["id"] = str(document.id)
+            document.metadata["id"] = document.id
             document.metadata["content"] = paragraph
             document.metadata["content_hash"] = calculate_content_hash(paragraph)
-            document.metadata["file_path"] = self.file_path
+            document.metadata["source"] = self.file_path
+            document.metadata["type"] = "pdf"
             documents.append(document)
         return documents

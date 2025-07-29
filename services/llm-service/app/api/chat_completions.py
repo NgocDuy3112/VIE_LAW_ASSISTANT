@@ -8,8 +8,7 @@ from app.schemas.message import Message
 from app.api.rate_limit import limiter
 from app.config import NUM_REQUESTS_PER_MINUTE, REQUEST_TIMEOUT_SECONDS
 from app.log.logger import get_logger
-from app.db.dependencies import get_postgresql_async_session
-from app.auth import get_current_user
+# from app.db.dependencies import get_postgresql_async_session
 
 
 
@@ -22,9 +21,7 @@ chat_completions_router = APIRouter()
 @limiter.limit(f"{NUM_REQUESTS_PER_MINUTE}/minute")
 async def create_chat_completion_endpoint(
     request: Request,
-    body: list[Message],
-    db: AsyncSession = Depends(get_postgresql_async_session),
-    user_id: UUID = Depends(get_current_user),
+    body: list[Message]
 ) -> Message:
     """
     Create a chat completion based on chat history and incoming messages.
@@ -36,11 +33,7 @@ async def create_chat_completion_endpoint(
     try:
         # Call the core chat completion logic, which handles history and saving
         response = await asyncio.wait_for(
-            create_chat_completion(
-                messages=body,
-                user_id=user_id,
-                db=db
-            ),
+            create_chat_completion(messages=body),
             timeout=REQUEST_TIMEOUT_SECONDS
         )
         return response

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from uuid import UUID
 from app.schemas.chat_history import ChatHistoryRequest, ChatHistoryResponse
-from app.helpers.embedding import embed_query  # your embedding function
+from app.helpers.embedding import embed_query
 from app.config import *
 
 

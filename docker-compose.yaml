@@ -89,16 +89,17 @@ services:
       context: ./services/llm-service
     restart: unless-stopped
     ports:
-      - "8001:8000"
+      - "8001:8001"
     volumes:
       - ./services/llm-service/app:/src/app
       - ./configs/.env.llm-service:/src/configs/.env
+      - ./encoders/embedding:/src/encoders/embedding
     environment:
       - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src
     entrypoint: /src/entrypoint.sh
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -122,6 +123,7 @@ services:
       - ./services/retriever-service/app:/src/app
       - ./configs/.env.retriever-service:/src/configs/.env
       - ./encoders/embedding:/src/encoders/embedding
+      - ./encoders/sparse-embedding:/src/encoders/sparse-embedding
     environment:
       - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src

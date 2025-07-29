@@ -35,6 +35,7 @@ async def create_indexing_service(
 ):
     content = document.metadata.get("content", "")
     content_hash = calculate_content_hash(content)
+
     if await is_document_already_indexed(async_qdrant_client, content_hash):
         logger.info(f"✅ Document already indexed (hash={content_hash}), skipping.")
         return document
@@ -79,24 +80,31 @@ async def create_indexing_service_from_pdf(
     for document in documents:
         content = document.metadata.get("content", "")
         content_hash = calculate_content_hash(content)
-
         if await is_document_already_indexed(async_qdrant_client, content_hash):
-            logger.info(f"✅ Skipping already indexed doc (hash={content_hash})")
+            logger.info(f"✅ Document already indexed (hash={content_hash}), skipping.")
             continue
 
-        logger.info(f"🔄 Indexing new doc from PDF (hash={content_hash})")
-        vector = dense_embedding.embed_document(document)
-
+        logger.info(f"🔄 Indexing new document (hash={content_hash})")
+        # Get embedding steps
+        dense_vector = dense_embedding.embed_document(document)
+        sparse_vector = sparse_embedding.embed_document(document)
+        
         payload = dict(document.metadata)
-        payload["content_hash"] = content_hash
+        payload["file_hash"] = content_hash
 
         await async_qdrant_client.upsert(
             collection_name=QDRANT_COLLECTION_NAME,
             points=[
                 models.PointStruct(
                     id=str(document.id),
-                    payload=payload,
-                    vector=vector
+                    payload=document.metadata,
+                    vector={
+                        "text-dense": dense_vector,
+                        "text-sparse": {
+                            "indices": sparse_vector["indices"],
+                            "values": sparse_vector["values"]
+                        }
+                    }
                 )
             ]
         )

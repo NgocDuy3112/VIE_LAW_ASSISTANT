@@ -1,11 +1,11 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
-from app.config import EMBEDDING_MODEL_NAME, EMBEDDING_DIMENSION, DEVICE
+from app.config import EMBEDDING_MODEL_PATH, EMBEDDING_DIMENSION, DEVICE
 
 
 
 embedding_model = SentenceTransformer(
-    EMBEDDING_MODEL_NAME, 
+    EMBEDDING_MODEL_PATH, 
     truncate_dim=EMBEDDING_DIMENSION, 
     device=DEVICE,
     config_kwargs={"torch_dtype": "float16"}  # Use float16 for memory efficiency
