@@ -2,39 +2,25 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 
 from app.schemas.document import DocumentSchema
-from app.config import EMBEDDING_MODEL_NAME, EMBEDDING_DIMENSION, DEVICE
-
-
-embedding_model = SentenceTransformer(
-    EMBEDDING_MODEL_NAME, 
-    truncate_dim=EMBEDDING_DIMENSION, 
-    device=DEVICE,
-    config_kwargs={"torch_dtype": "float16"}  # Use float16 for memory efficiency
-)
-
-
-def embed_document(
-    document: DocumentSchema,
-    embedding_model: SentenceTransformer=embedding_model
-) -> np.ndarray:
-    """
-    Embed a document using the configured embedding model.
-
-    Args:
-        document (Document): The document to embed.
-
-    Returns:
-        np.ndarray: The embeddings for the document.
-    """
-    text = document.metadata["content"]
-    embeddings = embedding_model.encode(text, convert_to_numpy=True, show_progress_bar=False)
-    return embeddings
+from app.config import EMBEDDING_MODEL_PATH, EMBEDDING_DIMENSION, DEVICE
 
 
 
-def embed_query(
-    query: str, 
-    embedding_model: SentenceTransformer=embedding_model
-) -> np.ndarray:
-    embeddings = embedding_model.encode(query, convert_to_numpy=True, show_progress_bar=False)
-    return embeddings
+class DenseEmbeddingService():
+    def __init__(
+        self, 
+        model_name_or_path: str=EMBEDDING_MODEL_PATH,
+        truncate_dim: int=EMBEDDING_DIMENSION, 
+        device: str=DEVICE, 
+        config_kwargs: dict={"torch_dtype": "float16"}
+    ):
+        self.embedding = SentenceTransformer(model_name_or_path, truncate_dim, device, config_kwargs)
+
+    def embed_document(self, document: DocumentSchema) -> np.ndarray:
+        text = document.metadata["content"]
+        embeddings = self.embedding.encode_document(text, show_progress_bar=False)
+        return embeddings
+
+    def embed_query(self, query: str) -> np.ndarray:
+        embeddings = self.embedding.encode_query(query, show_progress_bar=False)
+        return embeddings

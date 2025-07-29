@@ -1,5 +1,6 @@
 from qdrant_client import AsyncQdrantClient, models
-from app.helpers.embedding import *
+from app.helpers.embedding import DenseEmbeddingService
+from app.helpers.sparse_embedding import SparseEmbeddingService
 from app.helpers.pdf_processor import PDFProcessor, calculate_content_hash
 from app.schemas.document import DocumentSchema
 from app.log.logger import get_logger
@@ -7,7 +8,8 @@ from app.config import QDRANT_CLIENT_URL, QDRANT_COLLECTION_NAME
 
 
 logger = get_logger(__name__)
-
+dense_embedding = DenseEmbeddingService()
+sparse_embedding = SparseEmbeddingService()
 
 
 
@@ -38,7 +40,10 @@ async def create_indexing_service(
         return document
 
     logger.info(f"🔄 Indexing new document (hash={content_hash})")
-    vector = embed_document(document)
+    # Get embedding steps
+    dense_vector = dense_embedding.embed_document(document)
+    sparse_vector = sparse_embedding.embed_document(document)
+    
     payload = dict(document.metadata)
     payload["file_hash"] = content_hash
 
@@ -48,7 +53,13 @@ async def create_indexing_service(
             models.PointStruct(
                 id=str(document.id),
                 payload=document.metadata,
-                vector=vector
+                vector={
+                    "text-dense": dense_vector,
+                    "text-sparse": {
+                        "indices": sparse_vector["indices"],
+                        "values": sparse_vector["values"]
+                    }
+                }
             )
         ]
     )
@@ -74,7 +85,7 @@ async def create_indexing_service_from_pdf(
             continue
 
         logger.info(f"🔄 Indexing new doc from PDF (hash={content_hash})")
-        vector = embed_document(document)
+        vector = dense_embedding.embed_document(document)
 
         payload = dict(document.metadata)
         payload["content_hash"] = content_hash

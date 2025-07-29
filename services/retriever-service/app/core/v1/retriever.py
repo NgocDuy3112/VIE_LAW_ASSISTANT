@@ -2,7 +2,8 @@ import numpy as np
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import *
 from app.helpers.caching import ValkeySemanticCache
-from app.helpers.embedding import embed_query
+from app.helpers.embedding import DenseEmbeddingService
+from app.helpers.sparse_embedding import SparseEmbeddingService
 from app.helpers.extract_keywords import extract_legal_keywords
 from app.schemas.document import DocumentSchema
 from app.schemas.retriever import RetrieveRequest
@@ -11,6 +12,8 @@ from app.config import QDRANT_COLLECTION_NAME, QDRANT_CLIENT_URL
 
 
 logger = get_logger(__name__)
+dense_embedding = DenseEmbeddingService()
+sparse_embedding = SparseEmbeddingService()
 
 
 
@@ -33,13 +36,14 @@ class Retriever:
 
     async def retrieve(
         self,
-        query_embedding: np.ndarray,
+        dense_vector: np.ndarray,
+        sparse_vector: dict[str, list],
         top_k: int = 3,
         filter: Filter | None = None
     ) -> list[DocumentSchema]:
         logger.debug("Starting retrieval: top_k=%d, filter=%s", top_k, filter)
 
-        cached_docs = await self.cache.search(query_embedding, top_k=top_k)
+        cached_docs = await self.cache.search(dense_vector, top_k=top_k)
         if cached_docs:
             logger.info("✅ Cache hit: retrieved %d docs from Valkey", len(cached_docs))
             return [
@@ -53,7 +57,19 @@ class Retriever:
 
         qdrant_results = await self.qdrant.query_points(
             collection_name=self.collection,
-            query=query_embedding.tolist(),
+            prefetch=[
+                Prefetch(
+                    query=SparseVector(indices=sparse_vector["indices"], values=sparse_vector["values"]),
+                    using="text-sparse",
+                    limit=20
+                ),
+                Prefetch(
+                    query=dense_vector,
+                    using="text-dense",
+                    limit=20
+                )
+            ],
+            query=FusionQuery(fusion=Fusion.RRF),
             limit=top_k,
             with_payload=True,
             with_vectors=False,
@@ -75,7 +91,7 @@ class Retriever:
 
             await self.cache.set(
                 text=payload.get("content", ""),
-                embedding=query_embedding,
+                embedding=dense_vector,
                 payload=payload
             )
             logger.debug("Added doc ID=%s to Valkey cache", doc.id)
@@ -104,8 +120,9 @@ async def retriever_service(
     request: RetrieveRequest
 ) -> list[DocumentSchema]:
     retriever = Retriever(async_qdrant_client, valkey_cache)
-    embedding = embed_query(request.query)
+    dense_vector = dense_embedding.embed_query(request.query)
+    sparse_vector = sparse_embedding.embed_query(request.query)
     include_keywords = extract_legal_keywords(request.query)
     include_filter = build_keyword_inclusion_filter(include_keywords)
-    documents = await retriever.retrieve(embedding, request.top_k, include_filter)
+    documents = await retriever.retrieve(dense_vector, sparse_vector, request.top_k, include_filter)
     return documents

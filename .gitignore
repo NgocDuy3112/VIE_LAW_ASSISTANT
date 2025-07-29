@@ -4,6 +4,7 @@ data/
 logging/
 notebooks/
 sql/
+encoders/
 .vscode/
 .DS_Store
 

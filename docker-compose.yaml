@@ -121,6 +121,7 @@ services:
     volumes:
       - ./services/retriever-service/app:/src/app
       - ./configs/.env.retriever-service:/src/configs/.env
+      - ./encoders/embedding:/src/encoders/embedding
     environment:
       - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src

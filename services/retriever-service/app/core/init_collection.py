@@ -19,11 +19,16 @@ async def init_qdrant_collection(collection_name: str = QDRANT_COLLECTION_NAME) 
             logger.info(f"🔧 Creating collection '{collection_name}'")
             await client.create_collection(
                 collection_name=collection_name,
-                vectors_config=VectorParams(
-                    size=EMBEDDING_DIMENSION,
-                    distance=Distance.COSINE,
-                    datatype=Datatype.FLOAT16
-                ),
+                vectors_config={
+                    "text-dense": VectorParams(
+                        size=EMBEDDING_DIMENSION,
+                        distance=Distance.COSINE,
+                        datatype=Datatype.FLOAT16
+                    )
+                },
+                sparse_vectors_config={
+                    "text-sparse": models.SparseVectorParams(on_disk=True),
+                },
                 quantization_config=models.BinaryQuantization(
                     binary=models.BinaryQuantizationConfig(
                         encoding=models.BinaryQuantizationEncoding.TWO_BITS,
