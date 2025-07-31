@@ -41,28 +41,28 @@ services:
       - developer
       - production
 
-  postgresql-chat-history:
-    container_name: postgresql-chat-history
-    image: postgres:17.5-bullseye
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: chatdb
-    networks:
-      - vie-law-assistant-network
-    volumes:
-      - ./data/postgresql/chatdb:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d chatdb"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    profiles:
-      - developer
-      - production
+  # postgresql-chat-history:
+  #   container_name: postgresql-chat-history
+  #   image: postgres:17.5-bullseye
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: user
+  #     POSTGRES_PASSWORD: password
+  #     POSTGRES_DB: chatdb
+  #   networks:
+  #     - vie-law-assistant-network
+  #   volumes:
+  #     - ./data/postgresql/chatdb:/var/lib/postgresql/data
+  #   ports:
+  #     - "5433:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U user -d chatdb"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
+  #   profiles:
+  #     - developer
+  #     - production
 
   qdrant:
     container_name: qdrant
@@ -104,7 +104,7 @@ services:
       timeout: 5s
       retries: 3
     depends_on:
-      - postgresql-chat-history
+      # - postgresql-chat-history
       - valkey-rate-limit
     networks:
       - vie-law-assistant-network
@@ -137,6 +137,21 @@ services:
       - qdrant
       - valkey-rate-limit
       - valkey-cache
+    networks:
+      - vie-law-assistant-network
+    profiles:
+      - developer
+      - production
+
+  frontend:
+    container_name: frontend
+    image: nginx:stable-perl
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./configs/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - vie-law-assistant-network
     profiles:
