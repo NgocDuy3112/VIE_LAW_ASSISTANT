@@ -19,6 +19,7 @@ Caching & Rate Limiting: High-performance caching and request rate limiting usin
 ├── services/
 │   ├── llm-service/            # LLM-based chat completion service
 │   └── retriever-service/      # Document retrieval and indexing service
+├── frontend/                   # Web UI of the app
 ├── docker-compose.yaml         # Docker Compose orchestration
 └── README.md                   # Project documentation
 ```
@@ -54,22 +55,28 @@ cd vie-law-assistant
 ```
 docker-compose up --build
 ```
-4. Access the APIs:
-- LLM Service: http://localhost:8001/docs
-- Retriever Service: http://localhost:8000/docs
+
+4. Access the Web UI and APIs:
+- **Frontend (Web UI):** http://localhost:3000
+- **LLM Service API:** http://localhost:8001/docs
+- **Retriever Service API:** http://localhost:8000/docs
 
 
 ### Development
 Python dependencies for each service are listed in their respective requirements.txt files.
 
 
+
 ### Configuration
-- Valkey: Edit configs in ``configs`` as needed.
-- Service settings: Adjust environment variables in ``docker-compose.yaml`` or service config files.
+- **Frontend:** Static files are in the `frontend/` directory. Nginx config is at `frontend/nginx.conf` (edit for SPA routing or CORS if needed).
+- **Valkey:** Edit configs in `configs` as needed.
+- **Service settings:** Adjust environment variables in `docker-compose.yaml` or service config files.
 
 
 ### Acknowledgements
 - FastAPI
 - Valkey
 - Docker
-- PostgreSQL (used for chat history in future)
+- PostgreSQL
+- Qdrant
+- Nginx
