@@ -5,7 +5,7 @@ import shutil
 import os
 
 from app.schemas.document import DocumentSchema
-from app.core.v1.indexing import create_indexing_service, create_indexing_service_from_pdf
+from app.core.v1.ingestion import create_ingestion_service, create_ingestion_service_from_pdf
 from app.dependencies import get_async_qdrant_client  # use the Depends
 
 
@@ -21,7 +21,7 @@ async def index_document(
     """
     Index a document into Qdrant and return it.
     """
-    return await create_indexing_service(document, async_qdrant_client)
+    return await create_ingestion_service(document, async_qdrant_client)
 
 
 @indexing_router.post("/pdf", response_model=list[DocumentSchema])
@@ -44,7 +44,7 @@ async def index_pdf(
                 shutil.copyfileobj(file.file, tmp_file)
 
             # Pass the path and original filename to your service
-            documents = await create_indexing_service_from_pdf(
+            documents = await create_ingestion_service_from_pdf(
                 pdf_file=tmp_path,
                 async_qdrant_client=async_qdrant_client
             )

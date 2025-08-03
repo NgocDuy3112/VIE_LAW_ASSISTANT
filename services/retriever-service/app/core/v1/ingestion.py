@@ -7,13 +7,14 @@ from app.log.logger import get_logger
 from app.config import QDRANT_CLIENT_URL, QDRANT_COLLECTION_NAME
 
 
+
 logger = get_logger(__name__)
 dense_embedding = DenseEmbeddingService()
 sparse_embedding = SparseEmbeddingService()
 
 
 
-async def is_document_already_indexed(async_qdrant_client: AsyncQdrantClient, content_hash: str) -> bool:
+async def is_document_already_ingested(async_qdrant_client: AsyncQdrantClient, content_hash: str) -> bool:
     scroll = await async_qdrant_client.scroll(
         collection_name=QDRANT_COLLECTION_NAME,
         scroll_filter=models.Filter(
@@ -29,14 +30,14 @@ async def is_document_already_indexed(async_qdrant_client: AsyncQdrantClient, co
 
 
 
-async def create_indexing_service(
+async def create_ingestion_service(
     document: DocumentSchema,
     async_qdrant_client: AsyncQdrantClient = AsyncQdrantClient(url=QDRANT_CLIENT_URL)
 ):
     content = document.metadata.get("content", "")
     content_hash = calculate_content_hash(content)
 
-    if await is_document_already_indexed(async_qdrant_client, content_hash):
+    if await is_document_already_ingested(async_qdrant_client, content_hash):
         logger.info(f"✅ Document already indexed (hash={content_hash}), skipping.")
         return document
 
@@ -69,7 +70,7 @@ async def create_indexing_service(
 
 
 
-async def create_indexing_service_from_pdf(
+async def create_ingestion_service_from_pdf(
     pdf_file: str,
     async_qdrant_client: AsyncQdrantClient = AsyncQdrantClient(url=QDRANT_CLIENT_URL)
 ) -> list[DocumentSchema]:
@@ -80,7 +81,7 @@ async def create_indexing_service_from_pdf(
     for document in documents:
         content = document.metadata.get("content", "")
         content_hash = calculate_content_hash(content)
-        if await is_document_already_indexed(async_qdrant_client, content_hash):
+        if await is_document_already_ingested(async_qdrant_client, content_hash):
             logger.info(f"✅ Document already indexed (hash={content_hash}), skipping.")
             continue
 
