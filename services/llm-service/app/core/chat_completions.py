@@ -3,11 +3,11 @@ import re
 from openai import AsyncOpenAI
 
 from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+# from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.message import Message
-from app.schemas.chat_history import ChatHistoryRequest
-from app.core.chat_history import ChatHistoryRepository
+# from app.schemas.chat_history import ChatHistoryRequest
+# from app.core.chat_history import ChatHistoryRepository
 from app.config import REQUEST_TIMEOUT_SECONDS, OPENAI_API_KEY, BASE_URL, MODEL_NAME
 
 

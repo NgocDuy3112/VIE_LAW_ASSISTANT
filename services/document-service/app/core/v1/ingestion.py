@@ -1,7 +1,7 @@
 from qdrant_client import AsyncQdrantClient, models
 from app.helpers.embedding import DenseEmbeddingService
 from app.helpers.sparse_embedding import SparseEmbeddingService
-from app.helpers.pdf_processor import PDFProcessor, calculate_content_hash
+from app.helpers.documents_processor import DocumentsProcessor, calculate_content_hash
 from app.schemas.document import DocumentSchema
 from app.log.logger import get_logger
 from app.config import QDRANT_CLIENT_URL, QDRANT_COLLECTION_NAME
@@ -70,12 +70,12 @@ async def create_ingestion_service(
 
 
 
-async def create_ingestion_service_from_pdf(
+async def create_ingestion_service_from_documents(
     pdf_file: str,
     async_qdrant_client: AsyncQdrantClient = AsyncQdrantClient(url=QDRANT_CLIENT_URL)
 ) -> list[DocumentSchema]:
-    processor = PDFProcessor(pdf_file)
-    documents = processor.extract_documents()
+    processor = DocumentsProcessor()
+    documents = processor.extract_documents(pdf_file)
     indexed_docs = []
 
     for document in documents:

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 from uuid import UUID
 import asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
+# from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.chat_completions import create_chat_completion
 from app.schemas.message import Message

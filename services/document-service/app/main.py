@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.init_collection import init_qdrant_collection
-from app.api.v1.indexing import indexing_router
-from app.api.v1.retriever import retriever_router
+from app.api.v1.ingestion import documents_ingestion_router
+from app.api.v1.retrieve import retrieve_router
 from app.api.health_check import health_router
 
 
@@ -24,8 +24,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(indexing_router, tags=["Indexing endpoint"])
-app.include_router(retriever_router, tags=["Retrieving endpoint"])
+app.include_router(documents_ingestion_router, tags=["Documents Ingestion endpoint"])
+app.include_router(retrieve_router, tags=["Retrieving endpoint"])
 app.include_router(health_router, tags=["Health Check"])
 
 
