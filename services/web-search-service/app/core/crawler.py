@@ -8,11 +8,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
 
-import requests
-import asyncio
-import aiohttp
+import os
+from datetime import datetime
 
-from config import LEGAL_LAW_URL
+from app.config import LEGAL_LAW_URL
+from app.schemas.response import *
 
 
 class LegalDocumentCrawler:
@@ -31,64 +31,97 @@ class LegalDocumentCrawler:
         self.url = LEGAL_LAW_URL
 
 
-    async def crawl_pdf(
-        self, 
-        output_dir: str,
+    def crawl_pdf(
+        self,
         keyword: str | None = None,
         category: str | None = None, 
         organization: str | None = None, 
         doc_year: int | None = None,
     ):
-        # Run Selenium (blocking) calls in a thread
-        await asyncio.to_thread(self.driver.get, self.url)
+        try:
+            self.driver.get(self.url)
 
-        if category is not None:
-            category_input_section = await asyncio.to_thread(
-                self.wait.until,
-                EC.presence_of_element_located((By.CSS_SELECTOR, "select[name*='DocCategory']"))
+            # Select filters
+            if category:
+                category_input_section = self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "select[name*='DocCategory']"))
+                )
+                Select(category_input_section).select_by_visible_text(category)
+
+            if organization:
+                organization_input_section = self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "select[name*='DocOrg']"))
+                )
+                Select(organization_input_section).select_by_visible_text(organization)
+
+            if doc_year:
+                doc_year_input_section = self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "select[name*='DocYear']"))
+                )
+                Select(doc_year_input_section).select_by_visible_text(str(doc_year))
+
+            if keyword:
+                enter_text = self.wait.until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='text'][maxlength='100']"))
+                )
+                enter_text.clear()
+                enter_text.send_keys(keyword)
+
+            # Submit search
+            submit_button = self.wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='submit']"))
             )
-            await asyncio.to_thread(Select(category_input_section).select_by_visible_text, category)
+            submit_button.click()
 
-        if organization is not None:
-            organization_input_section = await asyncio.to_thread(
-                self.wait.until,
-                EC.presence_of_element_located((By.CSS_SELECTOR, "select[name*='DocOrg']"))
+            # Wait until results are loaded
+            self.wait.until(
+                EC.presence_of_all_elements_located((By.CLASS_NAME, "bl-doc-file"))
             )
-            await asyncio.to_thread(Select(organization_input_section).select_by_visible_text, organization)
 
-        if doc_year is not None:
-            doc_year_input_section = await asyncio.to_thread(
-                self.wait.until,
-                EC.presence_of_element_located((By.CSS_SELECTOR, "select[name*='DocYear']"))
+            results = []
+
+            # Get counts dynamically each time to avoid stale elements
+            issue_dates_count = len(self.driver.find_elements(By.CSS_SELECTOR, "span[class='issued-date']"))
+            titles_count = len(self.driver.find_elements(By.CSS_SELECTOR, "span[class='substract']"))
+            sections_count = len(self.driver.find_elements(By.CLASS_NAME, "bl-doc-file"))
+
+            for i in range(min(3, titles_count, sections_count, issue_dates_count)):
+                # Re-locate every time to avoid stale references
+                title_text = self.driver.find_elements(By.CSS_SELECTOR, "span[class='substract']")[i].text.strip()
+                date_text = self.driver.find_elements(By.CSS_SELECTOR, "span[class='issued-date']")[i].text.strip()
+                pdf_url = self.driver.find_elements(By.CLASS_NAME, "bl-doc-file")[i]\
+                    .find_element(By.TAG_NAME, "a")\
+                    .get_attribute("href")
+
+                try:
+                    issued_date = datetime.strptime(date_text, "%d/%m/%Y").date()
+                except ValueError:
+                    continue
+
+                results.append(PDFItem(
+                    title=title_text,
+                    url=pdf_url,
+                    issued_date=issued_date
+                ))
+
+            return GetPDFsResponse(
+                status="success",
+                count=len(results),
+                data=results,
+                message="Documents crawled successfully!"
             )
-            await asyncio.to_thread(Select(doc_year_input_section).select_by_visible_text, str(doc_year))
 
-        if keyword is not None:
-            enter_text = await asyncio.to_thread(
-                self.wait.until,
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='text'][maxlength='100']"))
+        except Exception as e:
+            return GetPDFsResponse(
+                status="error",
+                count=0,
+                data=[],
+                message=str(e)
             )
-            await asyncio.to_thread(enter_text.clear)
-            await asyncio.to_thread(enter_text.send_keys, keyword)
 
-        submit_button = await asyncio.to_thread(
-            self.wait.until,
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='submit']"))
-        )
-        await asyncio.to_thread(submit_button.click)
 
-        pdf_section = await asyncio.to_thread(
-            self.wait.until,
-            EC.presence_of_element_located((By.CLASS_NAME, "bl-doc-file"))
-        )
-        pdf_url = await asyncio.to_thread(
-            pdf_section.find_element(By.TAG_NAME, "a").get_attribute, "href"
-        )
 
-        # Async download PDF
-        pdf_path = f"{output_dir}/{pdf_url.split('/')[-1]}" if output_dir else pdf_url
-        async with aiohttp.ClientSession() as session:
-            async with session.get(pdf_url) as response:
-                content = await response.read()
-                with open(pdf_path, "wb") as f:
-                    f.write(content)
+
+if __name__ == "__main__":
+    crawler = LegalDocumentCrawler()
+    print(crawler.crawl_pdf())
