@@ -143,33 +143,31 @@ services:
       - developer
       - production
 
-  api-gateway:
-    container_name: api-gateway
+
+  web-search-service:
+    container_name: web-search-service
     build:
-      context: ./services/api-gateway
+      context: ./services/web-search-service
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8003:8003"
     volumes:
-      - ./services/api-gateway/app:/src/app
-      - ./configs/.env.api-gateway:/src/configs/.env
+      - ./services/web-search-service/app:/src/app
     environment:
-      - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src
     entrypoint: /src/entrypoint.sh
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
       interval: 10s
       timeout: 5s
       retries: 3
-    depends_on:
-      - llm-service
-      - document-service
     networks:
       - vie-law-assistant-network
     profiles:
       - developer
       - production
+
+
 
 
 networks:
