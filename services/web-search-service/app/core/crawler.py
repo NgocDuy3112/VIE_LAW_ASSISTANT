@@ -8,25 +8,27 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
 
-import os
 from datetime import datetime
 
 from app.config import LEGAL_LAW_URL
 from app.schemas.response import *
 
 
-class LegalDocumentCrawler:
+def create_driver():
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920,1080")
-    
     service = ChromeService(ChromeDriverManager().install())
-    
-    def __init__(self, timeout=30):
-        self.driver = webdriver.Chrome(service=self.service, options=self.options)
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver
+
+
+class LegalDocumentCrawler:
+    def __init__(self, timeout=30, driver=create_driver()):
+        self.driver = driver
         self.wait = WebDriverWait(self.driver, timeout)
         self.url = LEGAL_LAW_URL
 
@@ -120,8 +122,6 @@ class LegalDocumentCrawler:
             )
 
 
-
-
-if __name__ == "__main__":
-    crawler = LegalDocumentCrawler()
-    print(crawler.crawl_pdf())
+# if __name__ == "__main__":
+#     crawler = LegalDocumentCrawler()
+#     print(crawler.crawl_pdf())
