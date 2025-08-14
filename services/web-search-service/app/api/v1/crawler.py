@@ -5,7 +5,7 @@ from app.core.crawler import *
 crawler_router = APIRouter(prefix="/v1")
 
 
-@crawler_router.get("/", response_model=GetPDFsResponse)
+@crawler_router.get("/crawl", response_model=GetPDFsResponse)
 def get_pdfs(
     keyword: str | None = Query(None, description="Search keyword"),
     category: str | None = Query(None, description="Document category"),
@@ -14,7 +14,7 @@ def get_pdfs(
 ):
     driver = create_driver()
     try:
-        crawler = LegalDocumentCrawler(driver)
+        crawler = LegalDocumentCrawler()
         result = crawler.crawl_pdf(
             keyword=keyword,
             category=category,

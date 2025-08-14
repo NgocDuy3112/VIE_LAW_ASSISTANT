@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements file first to cache dependencies
 COPY requirements.txt .
 
-# Install PyTorch separately with correct CPU wheels
 RUN pip install --upgrade pip
 
 # Then install the rest of the requirements

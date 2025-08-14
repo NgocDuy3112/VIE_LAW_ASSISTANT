@@ -2,15 +2,14 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
-from webdriver_manager.chrome import ChromeDriverManager
 
+import os
 from datetime import datetime
 
-from app.config import LEGAL_LAW_URL
+from app.config import *
 from app.schemas.response import *
 
 
@@ -21,14 +20,14 @@ def create_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920,1080")
-    service = ChromeService(ChromeDriverManager().install())
+    service = ChromeService(executable_path=os.environ.get("CHROMEDRIVER_PATH", "/usr/bin/chromedriver"))
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
 
 class LegalDocumentCrawler:
-    def __init__(self, timeout=30, driver=create_driver()):
-        self.driver = driver
+    def __init__(self, driver: webdriver.Chrome | None = None, timeout: int=TIMEOUT):
+        self.driver = driver if driver else create_driver()
         self.wait = WebDriverWait(self.driver, timeout)
         self.url = LEGAL_LAW_URL
 
@@ -87,7 +86,7 @@ class LegalDocumentCrawler:
             titles_count = len(self.driver.find_elements(By.CSS_SELECTOR, "span[class='substract']"))
             sections_count = len(self.driver.find_elements(By.CLASS_NAME, "bl-doc-file"))
 
-            for i in range(min(3, titles_count, sections_count, issue_dates_count)):
+            for i in range(min(LIMIT, titles_count, sections_count, issue_dates_count)):
                 # Re-locate every time to avoid stale references
                 title_text = self.driver.find_elements(By.CSS_SELECTOR, "span[class='substract']")[i].text.strip()
                 date_text = self.driver.find_elements(By.CSS_SELECTOR, "span[class='issued-date']")[i].text.strip()
