@@ -34,6 +34,7 @@ class LegalDocumentCrawler:
 
     def crawl_pdf(
         self,
+        limit: int | None = LIMIT,
         keyword: str | None = None,
         category: str | None = None, 
         organization: str | None = None, 
@@ -86,7 +87,7 @@ class LegalDocumentCrawler:
             titles_count = len(self.driver.find_elements(By.CSS_SELECTOR, "span[class='substract']"))
             sections_count = len(self.driver.find_elements(By.CLASS_NAME, "bl-doc-file"))
 
-            for i in range(min(LIMIT, titles_count, sections_count, issue_dates_count)):
+            for i in range(min(limit, titles_count, sections_count, issue_dates_count)):
                 # Re-locate every time to avoid stale references
                 title_text = self.driver.find_elements(By.CSS_SELECTOR, "span[class='substract']")[i].text.strip()
                 date_text = self.driver.find_elements(By.CSS_SELECTOR, "span[class='issued-date']")[i].text.strip()
@@ -119,8 +120,3 @@ class LegalDocumentCrawler:
                 data=[],
                 message=str(e)
             )
-
-
-# if __name__ == "__main__":
-#     crawler = LegalDocumentCrawler()
-#     print(crawler.crawl_pdf())
