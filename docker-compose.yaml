@@ -144,15 +144,15 @@ services:
       - production
 
 
-  web-search-service:
-    container_name: web-search-service
+  web-crawler-service:
+    container_name: web-crawler-service
     build:
-      context: ./services/web-search-service
+      context: ./services/web-crawler-service
     restart: unless-stopped
     ports:
       - "8003:8003"
     volumes:
-      - ./services/web-search-service/app:/src/app
+      - ./services/web-crawler-service/app:/src/app
     environment:
       - PYTHONPATH=/src
     entrypoint: /src/entrypoint.sh

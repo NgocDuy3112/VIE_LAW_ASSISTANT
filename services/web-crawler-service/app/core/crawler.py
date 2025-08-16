@@ -26,15 +26,15 @@ def create_driver():
 
 
 class LegalDocumentCrawler:
-    def __init__(self, driver: webdriver.Chrome | None = None, timeout: int=TIMEOUT):
+    def __init__(self, driver: webdriver.Chrome | None = None, limit: int | None = LIMIT, url: str = LEGAL_LAW_URL, timeout: int=TIMEOUT):
         self.driver = driver if driver else create_driver()
         self.wait = WebDriverWait(self.driver, timeout)
-        self.url = LEGAL_LAW_URL
+        self.url = url
+        self.limit = limit
 
 
     def crawl_pdf(
         self,
-        limit: int | None = LIMIT,
         keyword: str | None = None,
         category: str | None = None, 
         organization: str | None = None, 
@@ -87,7 +87,7 @@ class LegalDocumentCrawler:
             titles_count = len(self.driver.find_elements(By.CSS_SELECTOR, "span[class='substract']"))
             sections_count = len(self.driver.find_elements(By.CLASS_NAME, "bl-doc-file"))
 
-            for i in range(min(limit, titles_count, sections_count, issue_dates_count)):
+            for i in range(min(self.limit, titles_count, sections_count, issue_dates_count)):
                 # Re-locate every time to avoid stale references
                 title_text = self.driver.find_elements(By.CSS_SELECTOR, "span[class='substract']")[i].text.strip()
                 date_text = self.driver.find_elements(By.CSS_SELECTOR, "span[class='issued-date']")[i].text.strip()
