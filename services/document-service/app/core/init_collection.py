@@ -26,11 +26,6 @@ async def init_qdrant_collection(collection_name: str = QDRANT_COLLECTION_NAME) 
                         datatype=Datatype.FLOAT16
                     )
                 },
-                sparse_vectors_config={
-                    "text-sparse": SparseVectorParams(
-                        index=SparseIndexParams(on_disk=True)
-                    ),
-                },
                 quantization_config=BinaryQuantization(
                     binary=BinaryQuantizationConfig(
                         encoding=BinaryQuantizationEncoding.TWO_BITS,

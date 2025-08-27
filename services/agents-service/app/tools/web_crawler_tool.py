@@ -1,21 +1,15 @@
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
-import instructor
-import openai
-import asyncio
 import aiohttp
-from concurrent.futures import ThreadPoolExecutor
+import asyncio
 
-from app.schemas.web_crawler import WebCrawlerToolInputSchema, WebCrawlerToolOutputSchema
+from app.schemas.tools.web_crawler import WebCrawlerToolInputSchema, WebCrawlerToolOutputSchema
 from app.config import *
 
 
 
 class WebCrawlerToolConfig(BaseToolConfig):
-    web_url: str = Field(default=LEGAL_LAW_URL, description="The website URL to be crawled")
     limit: int = Field(default=LIMIT, description="The maximum PDF documents to be crawled")
     timeout: int = Field(default=TIMEOUT, description="The timeout of the crawler")
 
@@ -31,12 +25,22 @@ class WebCrawlerTool(BaseTool[WebCrawlerToolInputSchema, WebCrawlerToolOutputSch
     """
     def __init__(self, config: WebCrawlerToolConfig = WebCrawlerToolConfig()):
         super().__init__(config)
-        self.web_url = config.web_url
         self.limit = config.limit
         self.timeout = config.timeout
-
-    async def arun(self, params: WebCrawlerToolInputSchema) -> WebCrawlerToolOutputSchema:
-        pass
     
     def run(self, params: WebCrawlerToolInputSchema) -> WebCrawlerToolOutputSchema:
-        raise NotImplementedError()
+        return asyncio.run(self._async_run(params))
+    
+    async def _async_run(self, params: WebCrawlerToolInputSchema) -> WebCrawlerToolOutputSchema:
+        payload = params.model_dump()
+        payload.update({
+            "limit": self.limit,
+            "timeout": self.timeout
+        })
+
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout)) as session:
+            async with session.post(WEB_CRAWLER_SERVICE_URL, json=payload) as resp:
+                if resp.status != 200:
+                    raise RuntimeError(f"Crawler service error {resp.status}: {await resp.text()}")
+                resp_json = await resp.json()
+                return WebCrawlerToolOutputSchema(**resp_json)

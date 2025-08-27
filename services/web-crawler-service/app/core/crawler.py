@@ -26,7 +26,7 @@ def create_driver():
 
 
 class LegalDocumentCrawler:
-    def __init__(self, driver: webdriver.Chrome | None = None, limit: int | None = LIMIT, url: str = LEGAL_LAW_URL, timeout: int=TIMEOUT):
+    def __init__(self, driver: webdriver.Chrome | None=None, limit: int | None=LIMIT, url: str=LEGAL_LAW_URL, timeout: int=TIMEOUT):
         self.driver = driver if driver else create_driver()
         self.wait = WebDriverWait(self.driver, timeout)
         self.url = url

@@ -45,7 +45,7 @@ async def create_ingestion_service(
     # Get embedding steps
     dense_vector = dense_embedding.embed_document(document)
     sparse_vector = sparse_embedding.embed_document(document)
-    
+
     payload = dict(document.metadata)
     payload["file_hash"] = content_hash
 
