@@ -41,29 +41,6 @@ services:
       - developer
       - production
 
-  # postgresql-chat-history:
-  #   container_name: postgresql-chat-history
-  #   image: postgres:17.5-bullseye
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_USER: user
-  #     POSTGRES_PASSWORD: password
-  #     POSTGRES_DB: chatdb
-  #   networks:
-  #     - vie-law-assistant-network
-  #   volumes:
-  #     - ./data/postgresql/chatdb:/var/lib/postgresql/data
-  #   ports:
-  #     - "5433:5432"
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U user -d chatdb"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 3
-  #   profiles:
-  #     - developer
-  #     - production
-
   qdrant:
     container_name: qdrant
     image: qdrant/qdrant:v1.15.0
@@ -77,6 +54,31 @@ services:
       - QDRANT__SERVICE__HTTP_PORT=6333
       - QDRANT__SERVICE__GRPC_PORT=6334
       - QDRANT__STORAGE__PATH=/qdrant/storage
+    networks:
+      - vie-law-assistant-network
+    profiles:
+      - developer
+      - production
+    
+  auth-service:
+    container_name: auth-service
+    build:
+      context: ./services/auth-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/auth-service/app:/src/app
+      - ./configs/.env.auth-service:/src/configs/.env
+    environment:
+      - ENV_FILE=/src/configs/.env
+      - PYTHONPATH=/src
+    entrypoint: /src/entrypoint.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - vie-law-assistant-network
     profiles:
@@ -104,8 +106,8 @@ services:
       timeout: 5s
       retries: 3
     depends_on:
-      # - postgresql-chat-history
       - valkey-rate-limit
+      - auth-service
     networks:
       - vie-law-assistant-network
     profiles:
@@ -137,6 +139,7 @@ services:
       - qdrant
       - valkey-rate-limit
       - valkey-cache
+      - auth-service
     networks:
       - vie-law-assistant-network
     profiles:
@@ -161,6 +164,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    depends_on:
+      - auth-service
     networks:
       - vie-law-assistant-network
     profiles:

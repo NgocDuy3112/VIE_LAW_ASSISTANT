@@ -13,6 +13,11 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+
+.python-version
+pyproject.toml
+uv.lock
+
 # C extensions
 *.so
 

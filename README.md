@@ -1,3 +1,7 @@
+# TODO
+- [ ] Write tests for each service.
+- [ ] Create a web UI for the app.
+
 # VIE Law Assistant
 VIE Law Assistant is a modular, containerized system designed to provide legal information retrieval and conversational AI services for Vietnamese law documents. It leverages large language models (LLMs), document retrievers, and caching/rate-limiting mechanisms to deliver fast, accurate, and scalable legal assistance.
 
