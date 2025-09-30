@@ -7,3 +7,7 @@ asyncpg
 aiosqlite
 alembic
 python-dotenv
+pydantic-settings
+pytest
+pytest-asyncio
+greenlet

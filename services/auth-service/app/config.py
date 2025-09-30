@@ -1,22 +1,19 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv(dotenv_path="/src/configs/.env", override=True)
+
 
 
 class Settings(BaseSettings):
-    # Use a strong secret in production
-    AUTH_HS256_SECRET: str = "change-me-in-production"
-
-    # Lifetimes
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
-
-    # Async DB URL. Example:
-    # postgresql+asyncpg://user:pass@localhost:5432/auth_db
-    # For dev: sqlite+aiosqlite:///./auth.db
-    DATABASE_URL: str = "postgresql+asyncpg://user:pass@localhost:5432/auth_db"
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    AUTH_HS256_SECRET: str = os.getenv("AUTH_HS256_SECRET")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
+    AUTH_ISSUER: str = os.getenv("AUTH_ISSUER")
+    AUTH_AUDIENCE: str = os.getenv("AUTH_AUDIENCE")
+    DATABASE_URL: str = os.getenv("DATABASE_URL")
 
 
 settings = Settings()

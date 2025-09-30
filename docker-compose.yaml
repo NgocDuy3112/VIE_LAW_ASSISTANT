@@ -80,6 +80,7 @@ services:
       retries: 5
     restart: always
     profiles:
+      - testing
       - production
       - developer
 
@@ -105,6 +106,7 @@ services:
     networks:
       - vie-law-assistant-network
     profiles:
+      - testing
       - developer
       - production
 

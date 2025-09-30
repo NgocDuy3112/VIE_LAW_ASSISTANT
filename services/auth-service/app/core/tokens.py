@@ -2,10 +2,10 @@ from datetime import datetime, timedelta
 import hashlib
 import secrets
 from typing import Any
-
 import jwt
 
 from app.config import settings
+
 
 SECRET = settings.AUTH_HS256_SECRET
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
