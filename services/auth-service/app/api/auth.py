@@ -11,10 +11,10 @@ from app.schemas.auth import RegisterIn, TokenOut
 
 
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", status_code=201)
+@auth_router.post("/register", status_code=201)
 async def register(payload: RegisterIn, db: AsyncSession = Depends(get_db)):
     q = select(User).filter_by(email=payload.email)
     result = await db.execute(q)
@@ -29,7 +29,7 @@ async def register(payload: RegisterIn, db: AsyncSession = Depends(get_db)):
     return {"id": user.id, "username": user.username}
 
 
-@router.post("/login", response_model=TokenOut)
+@auth_router.post("/login", response_model=TokenOut)
 async def login(payload: RegisterIn, db: AsyncSession = Depends(get_db)):
     q = select(User).filter_by(email=payload.email)
     result = await db.execute(q)

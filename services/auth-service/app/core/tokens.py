@@ -25,7 +25,7 @@ def create_access_token(subject: str, scopes: list | None = None) -> str:
 
 
 def create_refresh_token() -> dict[str, Any]:
-    raw = secrets.token_urlsafe(64)
+    raw = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw.encode()).hexdigest()
     issued_at = datetime.now()
     expires_at = issued_at + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
