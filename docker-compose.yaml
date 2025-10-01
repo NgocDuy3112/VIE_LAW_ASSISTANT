@@ -17,6 +17,7 @@ services:
     networks:
       - vie-law-assistant-network
     profiles:
+      - testing
       - developer
       - production
 
@@ -80,7 +81,6 @@ services:
       retries: 5
     restart: always
     profiles:
-      - testing
       - production
       - developer
 
@@ -106,21 +106,19 @@ services:
     networks:
       - vie-law-assistant-network
     profiles:
-      - testing
       - developer
       - production
 
-  llm-service:
-    container_name: llm-service
+  agent-service:
+    container_name: agent-service
     build:
-      context: ./services/llm-service
+      context: ./services/agent-service
     restart: unless-stopped
     ports:
       - "8001:8001"
     volumes:
-      - ./services/llm-service/app:/src/app
-      - ./configs/.env.llm-service:/src/configs/.env
-      - ./encoders/embedding:/src/encoders/embedding
+      - ./services/agent-service/app:/src/app
+      - ./configs/.env.agent-service:/src/configs/.env
     environment:
       - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src
@@ -132,10 +130,11 @@ services:
       retries: 3
     depends_on:
       - valkey-rate-limit
-      - auth-service
+      # - auth-service
     networks:
       - vie-law-assistant-network
     profiles:
+      - testing
       - developer
       - production
 

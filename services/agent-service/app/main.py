@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 # from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 # from sqlalchemy.orm import sessionmaker
 
-from app.api.chat_completions import chat_completions_router
+from app.api.response import response_router
 # from app.api.chat_history import chat_history_router
 from app.api.health_check import health_router
 # from app.db.async_postgres import AsyncPostgresDatabase
@@ -47,7 +47,7 @@ from app.api.health_check import health_router
 
 
 
-app = FastAPI(title="LLM Service", version="1.0.0", root_path="/llm-service")
+app = FastAPI(title="Agent Service", version="1.0.0", root_path="/agent-service")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Adjust this to your needs
@@ -55,7 +55,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(chat_completions_router)
+app.include_router(response_router, tags=["Agent Response"])
 # app.include_router(chat_history_router)
 app.include_router(health_router, tags=["Health Check"])
 
@@ -66,4 +66,4 @@ async def get_status():
     """
     Root endpoint to check the service status.
     """
-    return {"message": "LLM Service is running."}
+    return {"message": "Agent Service is running."}

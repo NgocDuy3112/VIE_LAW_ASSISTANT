@@ -7,7 +7,7 @@ from app.core.security import hash_password, verify_password
 from app.core.tokens import create_access_token, create_refresh_token
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
-from app.schemas.auth import RegisterIn, TokenOut
+from app.schemas.auth import RegisterRequest, LogInRequest, TokenResponse
 
 
 
@@ -15,22 +15,25 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @auth_router.post("/register", status_code=201)
-async def register(payload: RegisterIn, db: AsyncSession = Depends(get_db)):
+async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
     q = select(User).filter_by(email=payload.email)
     result = await db.execute(q)
     existing = result.scalar_one_or_none()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    user = User(email=payload.email, password_hash=hash_password(payload.password))
+    user = User(
+        username=payload.username,
+        email=payload.email, 
+        password_hash=hash_password(payload.password))
     db.add(user)
     await db.commit()
     await db.refresh(user)
     return {"id": user.id, "username": user.username}
 
 
-@auth_router.post("/login", response_model=TokenOut)
-async def login(payload: RegisterIn, db: AsyncSession = Depends(get_db)):
+@auth_router.post("/login", response_model=TokenResponse)
+async def login(payload: LogInRequest, db: AsyncSession = Depends(get_db)):
     q = select(User).filter_by(email=payload.email)
     result = await db.execute(q)
     user = result.scalar_one_or_none()

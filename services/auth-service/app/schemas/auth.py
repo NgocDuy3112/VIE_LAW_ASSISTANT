@@ -2,11 +2,17 @@ from pydantic import BaseModel, EmailStr
 
 
 
-class RegisterIn(BaseModel):
+class RegisterRequest(BaseModel):
+    username: str
     email: EmailStr
     password: str
 
 
-class TokenOut(BaseModel):
+class LogInRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str

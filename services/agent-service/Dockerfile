@@ -29,6 +29,7 @@ RUN pip install -r requirements.txt
 
 # Copy app code
 COPY app/ .
+COPY tests/ .
 
 # Copy and make entrypoint executable
 COPY entrypoint.sh .

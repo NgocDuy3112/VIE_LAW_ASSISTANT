@@ -25,6 +25,7 @@ async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+
 @app.get("/", tags=["Root"])
 async def get_status():
     """

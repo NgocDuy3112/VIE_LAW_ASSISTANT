@@ -3,23 +3,23 @@ from uuid import UUID
 import asyncio
 # from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.chat_completions import create_chat_completion
+from app.core.response import create_response
 from app.schemas.message import Message
 from app.api.rate_limit import limiter
-from app.config import NUM_REQUESTS_PER_MINUTE, REQUEST_TIMEOUT_SECONDS
+from app.config import settings
 from app.log.logger import get_logger
 # from app.db.dependencies import get_postgresql_async_session
 
 
 
 logger = get_logger(__name__)
-chat_completions_router = APIRouter()
+response_router = APIRouter()
 
 
 
-@chat_completions_router.post("/v1/chat/completions", response_model=Message)
-@limiter.limit(f"{NUM_REQUESTS_PER_MINUTE}/minute")
-async def create_chat_completion_endpoint(
+@response_router.post("/v1/response", response_model=Message)
+@limiter.limit(f"{settings.NUM_REQUESTS_PER_MINUTE}/minute")
+async def create_response_endpoint(
     request: Request,
     body: list[Message]
 ) -> Message:
@@ -33,8 +33,8 @@ async def create_chat_completion_endpoint(
     try:
         # Call the core chat completion logic, which handles history and saving
         response = await asyncio.wait_for(
-            create_chat_completion(messages=body),
-            timeout=REQUEST_TIMEOUT_SECONDS
+            create_response(messages=body),
+            timeout=settings.REQUEST_TIMEOUT_SECONDS
         )
         return response
     except asyncio.TimeoutError:

@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 
 
-load_dotenv(dotenv_path="/src/configs/.env", override=True)
+load_dotenv("/src/configs/.env", override=True)
 
 
 

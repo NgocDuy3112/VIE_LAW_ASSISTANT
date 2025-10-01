@@ -3,13 +3,13 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.config import RATE_LIMIT_URI
+from app.config import settings
 
 
 # Always create the limiter instance at module level
 limiter = Limiter(
     key_func=get_remote_address,
-    storage_uri=RATE_LIMIT_URI  # e.g., "redis://valkey:6379"
+    storage_uri=settings.RATE_LIMIT_URI  # e.g., "redis://valkey:6379"
 )
 
 async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):

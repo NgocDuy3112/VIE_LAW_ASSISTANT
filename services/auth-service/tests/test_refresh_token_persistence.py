@@ -22,7 +22,7 @@ async def test_refresh_token_persistence_and_hash_match():
     and verify that the token_hash stored in DB matches sha256(raw_token).
     """
 
-    # Use the same URL as we set above (in-memory). Note: app_engine was created on import with the env var.
+    # Use the same URL as we set above. Note: app_engine was created on import with the env var.
     test_engine = create_async_engine(settings.DATABASE_URL, future=True, echo=False)
 
     # Create tables in the in-memory DB
