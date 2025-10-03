@@ -84,6 +84,31 @@ services:
       - production
       - developer
 
+  auth-service:
+    container_name: auth-service
+    build:
+      context: ./services/auth-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/auth-service/app:/src/app
+      - ./configs/.env.auth-service:/src/configs/.env
+    environment:
+      - ENV_FILE=/src/configs/.env
+      - PYTHONPATH=/src
+    entrypoint: /src/entrypoint.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - vie-law-assistant-network
+    profiles:
+      - developer
+      - production
+
   agent-service:
     container_name: agent-service
     build:
@@ -105,6 +130,7 @@ services:
       retries: 3
     depends_on:
       - valkey-rate-limit
+      # - auth-service
     networks:
       - vie-law-assistant-network
     profiles:
@@ -137,6 +163,7 @@ services:
       - qdrant
       - valkey-rate-limit
       - valkey-cache
+      - auth-service
     networks:
       - vie-law-assistant-network
     profiles:
@@ -160,6 +187,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    depends_on:
+      - auth-service
     networks:
       - vie-law-assistant-network
     profiles:

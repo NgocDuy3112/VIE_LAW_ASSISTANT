@@ -5,6 +5,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables.config import RunnableConfig
 
 from langgraph.graph import StateGraph, START
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from graph.state import AgentState
@@ -23,7 +24,9 @@ respone_llm = ChatModel("lmstudio/seallms-v3-1.5b-chat", temperature=0.1)
 
 
 
-async def graph_ainvoke(messages: list[HumanMessage]):
+
+
+async def agent_invoke(messages: list[HumanMessage]):
     async with AsyncPostgresSaver.from_conn_string(settings.POSTGRES_CHECKPOINTS_URI) as checkpointer:
         config = RunnableConfig(
             recursion_limit=25,
@@ -44,12 +47,17 @@ async def graph_ainvoke(messages: list[HumanMessage]):
             }
         )
         tools = await mcp_client.get_tools()
-        builder = StateGraph(AgentState)
-        builder.add_node("supervisor", make_supervisor_node(llm=supervisor_llm, members=['response', 'supervisor', 'rag']))
-        builder.add_node("rag", make_rag_agent(llm=rag_llm, tools=tools))
-        builder.add_node("response", make_response_node(llm=respone_llm))
-        builder.add_edge(START, "supervisor")
-        graph = builder.compile(checkpointer=checkpointer)
+
+        def build_graph() -> CompiledStateGraph:
+            builder = StateGraph(AgentState)
+            builder.add_node("supervisor", make_supervisor_node(llm=supervisor_llm, members=['response', 'supervisor', 'rag']))
+            builder.add_node("rag", make_rag_agent(llm=rag_llm, tools=tools))
+            builder.add_node("response", make_response_node(llm=respone_llm))
+            builder.add_edge(START, "supervisor")
+            graph = builder.compile(checkpointer=checkpointer)
+            return graph
+
+        graph = build_graph()
         messages = {'messages': messages}
-        response = await graph.ainvoke(input=messages)
+        response = await graph.ainvoke(input=messages, config=config)
         return response
