@@ -9,8 +9,8 @@ from selenium.webdriver.support.ui import Select
 import os
 from datetime import datetime
 
-from app.config import *
-from app.schemas.response import *
+from app.config import settings
+from app.schemas.crawler import PDFItem, CrawlerRequest, CrawlerResponse
 
 
 def create_driver():
@@ -26,48 +26,51 @@ def create_driver():
 
 
 class LegalDocumentCrawler:
-    def __init__(self, driver: webdriver.Chrome | None=None, limit: int | None=LIMIT, url: str=LEGAL_LAW_URL, timeout: int=TIMEOUT):
+    def __init__(
+        self, 
+        driver: webdriver.Chrome | None=None, 
+        limit: int | None=settings.LIMIT, 
+        url: str=settings.LEGAL_LAW_URL, 
+        timeout: int=settings.TIMEOUT
+    ):
         self.driver = driver if driver else create_driver()
         self.wait = WebDriverWait(self.driver, timeout)
         self.url = url
         self.limit = limit
 
 
-    def crawl_pdf(
+    async def crawl_pdf(
         self,
-        keyword: str | None = None,
-        category: str | None = None, 
-        organization: str | None = None, 
-        doc_year: int | None = None,
+        request: CrawlerRequest
     ):
         try:
             self.driver.get(self.url)
 
             # Select filters
-            if category:
+            if request.category:
                 category_input_section = self.wait.until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "select[name*='DocCategory']"))
                 )
-                Select(category_input_section).select_by_visible_text(category)
+                Select(category_input_section).select_by_visible_text(request.category)
 
-            if organization:
+            if request.organization:
                 organization_input_section = self.wait.until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "select[name*='DocOrg']"))
                 )
-                Select(organization_input_section).select_by_visible_text(organization)
+                Select(organization_input_section).select_by_visible_text(request.organization)
 
-            if doc_year:
+            if request.doc_year:
                 doc_year_input_section = self.wait.until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "select[name*='DocYear']"))
                 )
-                Select(doc_year_input_section).select_by_visible_text(str(doc_year))
+                Select(doc_year_input_section).select_by_visible_text(str(request.doc_year))
 
-            if keyword:
+            if request.keyword:
                 enter_text = self.wait.until(
                     EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='text'][maxlength='100']"))
                 )
                 enter_text.clear()
-                enter_text.send_keys(keyword)
+                enter_text.send_keys(request.keyword)
 
             # Submit search
             submit_button = self.wait.until(
@@ -106,17 +109,17 @@ class LegalDocumentCrawler:
                     issued_date=issued_date
                 ))
 
-            return GetPDFsResponse(
+            return CrawlerResponse(
                 status="success",
                 count=len(results),
                 data=results,
-                message="Documents crawled successfully!"
+                detail="Documents crawled successfully!"
             )
 
         except Exception as e:
-            return GetPDFsResponse(
+            return CrawlerResponse(
                 status="error",
                 count=0,
                 data=[],
-                message=str(e)
+                detail=str(e)
             )

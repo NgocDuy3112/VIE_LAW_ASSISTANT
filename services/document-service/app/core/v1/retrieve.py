@@ -1,14 +1,15 @@
 import numpy as np
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import *
+
 from app.helpers.caching import ValkeySemanticCache
 from app.helpers.embedding import DenseEmbeddingService
 from app.helpers.sparse_embedding import SparseEmbeddingService
 from app.helpers.extract_keywords import extract_legal_keywords
 from app.schemas.document import DocumentSchema
-from app.schemas.retriever import RetrieveRequest
+from app.schemas.retrieve import RetrieveRequest, RetrieveResponse
 from app.log.logger import get_logger
-from app.config import QDRANT_COLLECTION_NAME, QDRANT_CLIENT_URL
+from app.config import settings
 
 
 logger = get_logger(__name__)
@@ -24,9 +25,9 @@ class Retriever:
     """
     def __init__(
         self,
-        async_qdrant_client: AsyncQdrantClient = AsyncQdrantClient(url=QDRANT_CLIENT_URL),
+        async_qdrant_client: AsyncQdrantClient = AsyncQdrantClient(url=settings.QDRANT_CLIENT_URL),
         valkey_cache: ValkeySemanticCache = ValkeySemanticCache(),
-        collection_name: str = QDRANT_COLLECTION_NAME,
+        collection_name: str = settings.QDRANT_COLLECTION_NAME,
         cache_threshold: float = 0.8,
     ):
         self.cache = valkey_cache
@@ -65,7 +66,10 @@ class Retriever:
             collection_name=self.collection,
             prefetch=[
                 Prefetch(
-                    query=SparseVector(indices=sparse_vector["indices"], values=sparse_vector["values"]),
+                    query=SparseVector(
+                        indices=sparse_vector["indices"], 
+                        values=sparse_vector["values"]
+                    ),
                     using="text-sparse",
                     limit=20
                 ),
@@ -123,11 +127,22 @@ async def retriever_service(
     async_qdrant_client: AsyncQdrantClient, 
     valkey_cache: ValkeySemanticCache, 
     request: RetrieveRequest
-) -> list[DocumentSchema]:
-    retriever = Retriever(async_qdrant_client, valkey_cache)
-    dense_vector = dense_embedding.embed_query(request.query)
-    sparse_vector = sparse_embedding.embed_query(request.query)
-    include_keywords = extract_legal_keywords(request.query)
-    include_filter = build_keyword_inclusion_filter(include_keywords)
-    documents = await retriever.retrieve(dense_vector, sparse_vector, request.top_k, include_filter)
-    return documents
+) -> RetrieveResponse:
+    try:
+        retriever = Retriever(async_qdrant_client, valkey_cache)
+        dense_vector = dense_embedding.embed_query(request.query)
+        sparse_vector = sparse_embedding.embed_query(request.query)
+        include_keywords = extract_legal_keywords(request.query)
+        include_filter = build_keyword_inclusion_filter(include_keywords)
+        documents = await retriever.retrieve(dense_vector, sparse_vector, request.top_k, include_filter)
+        return RetrieveResponse(
+            results=documents,
+            status='success',
+            detail=f"Successfully retrieved {len(documents)} documents."
+        )
+    except Exception as e:
+        return RetrieveResponse(
+            results=[],
+            status='error',
+            detail=f"Retrieving process got error: {e}"
+        )

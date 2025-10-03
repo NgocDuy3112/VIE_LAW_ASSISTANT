@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from qdrant_client import AsyncQdrantClient
+
 from app.helpers.caching import ValkeySemanticCache
-from app.schemas.document import DocumentSchema
-from app.schemas.retriever import RetrieveRequest
+from app.schemas.retrieve import RetrieveRequest, RetrieveResponse
 from app.core.v1.retrieve import retriever_service
 from app.dependencies import get_async_qdrant_client, get_valkey_cache
 
@@ -12,7 +12,7 @@ retrieve_router = APIRouter(prefix="/v1/retrieve")
 
 
 
-@retrieve_router.post("/", response_model=list[DocumentSchema])
+@retrieve_router.post("/", response_model=RetrieveResponse, operation_id="retrieve_documents")
 async def retrieve(
     request: RetrieveRequest,
     async_qdrant_client: AsyncQdrantClient = Depends(get_async_qdrant_client),
