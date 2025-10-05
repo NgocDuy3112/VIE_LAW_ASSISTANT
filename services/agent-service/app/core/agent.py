@@ -23,9 +23,6 @@ respone_llm = ChatModel("lmstudio/seallms-v3-1.5b-chat", temperature=0.1)
 
 
 
-
-
-
 async def agent_invoke(messages: list[HumanMessage]):
     async with AsyncPostgresSaver.from_conn_string(settings.POSTGRES_CHECKPOINTS_URI) as checkpointer:
         config = RunnableConfig(
@@ -58,6 +55,8 @@ async def agent_invoke(messages: list[HumanMessage]):
             return graph
 
         graph = build_graph()
-        messages = {'messages': messages}
+        messages = {
+            'messages': messages
+        }
         response = await graph.ainvoke(input=messages, config=config)
         return response

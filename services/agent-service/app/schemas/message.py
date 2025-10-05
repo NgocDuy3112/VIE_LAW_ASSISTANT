@@ -1,9 +1,10 @@
+from typing import Literal
 from pydantic import BaseModel, Field
 
 
 class BaseMessageSchema(BaseModel):
-    role: str = Field(..., description="Role of the message sender (e.g., 'user', 'assistant')")
-    content: list[dict] = Field(..., description="Content of the message")
+    role: Literal["user", "assistant", "system"] = Field(..., description="Role of the message sender (e.g., 'user', 'assistant', 'system')")
+    content: str = Field(..., description="Content of the message")
 
 
 

@@ -3,7 +3,6 @@ from uuid import UUID
 import asyncio
 # from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.response import create_response
 from app.schemas.message import Message
 from app.api.rate_limit import limiter
 from app.config import settings
@@ -29,17 +28,4 @@ async def create_response_endpoint(
     if not body:
         logger.info("Empty body received.")
         raise HTTPException(status_code=400, detail="Messages cannot be empty.")
-
-    try:
-        # Call the core chat completion logic, which handles history and saving
-        response = await asyncio.wait_for(
-            create_response(messages=body),
-            timeout=settings.REQUEST_TIMEOUT_SECONDS
-        )
-        return response
-    except asyncio.TimeoutError:
-        logger.error("Chat completion request timed out.")
-        raise HTTPException(status_code=504, detail="Request timed out. Please try again later.")
-    except Exception as e:
-        logger.error(f"Chat completion error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error.")
+    pass
