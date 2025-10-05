@@ -122,8 +122,7 @@ async def logout(payload: RefreshTokenRequest, db: AsyncSession = Depends(get_db
     """
     Revokes the provided Refresh Token, ending the user's persistent session.
     """
-    refresh_token_raw = payload.refresh_token
-    token_hash = get_token_hash(refresh_token_raw)
+    token_hash = get_token_hash(payload.refresh_token)
 
     # Find the token by hash and mark it as revoked (only if it's not already revoked)
     q = update(RefreshToken).where(
