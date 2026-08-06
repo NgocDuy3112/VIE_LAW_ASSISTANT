@@ -84,41 +84,44 @@ services:
       - production
       - developer
 
-  auth-service:
-    container_name: auth-service
+  backend:
+    container_name: backend
     build:
-      context: ./services/auth-service
+      context: ./backend
     restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
-      - ./services/auth-service/app:/src/app
-      - ./configs/.env.auth-service:/src/configs/.env
-    environment:
-      - ENV_FILE=/src/configs/.env
-      - PYTHONPATH=/src
+      - ./backend/src:/src/src
+      - ./backend/prisma:/src/prisma
+    env_file:
+      - ./configs/.env.backend
     entrypoint: /src/entrypoint.sh
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    depends_on:
+      - postgresql-user
     networks:
       - vie-law-assistant-network
     profiles:
       - developer
       - production
 
-  agent-service:
-    container_name: agent-service
+  agent:
+    container_name: agent
     build:
-      context: ./services/agent-service
+      context: ./agent
     restart: unless-stopped
     ports:
       - "8001:8001"
     volumes:
-      - ./services/agent-service/app:/src/app
-      - ./configs/.env.agent-service:/src/configs/.env
+      - ./agent/app:/src/app
+      - ./configs/.env.agent:/src/configs/.env
+      - ./encoders/embedding:/src/encoders/embedding
+      - ./encoders/sparse-embedding:/src/encoders/sparse-embedding
     environment:
       - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src
@@ -130,7 +133,8 @@ services:
       retries: 3
     depends_on:
       - valkey-rate-limit
-      # - auth-service
+      - qdrant
+      - valkey-cache
     networks:
       - vie-law-assistant-network
     profiles:
@@ -138,47 +142,15 @@ services:
       - developer
       - production
 
-  document-service:
-    container_name: document-service
+  crawler:
+    container_name: crawler
     build:
-      context: ./services/document-service
-    restart: unless-stopped
-    ports:
-      - "8002:8002"
-    volumes:
-      - ./services/document-service/app:/src/app
-      - ./configs/.env.document-service:/src/configs/.env
-      - ./encoders/embedding:/src/encoders/embedding
-      - ./encoders/sparse-embedding:/src/encoders/sparse-embedding
-    environment:
-      - ENV_FILE=/src/configs/.env
-      - PYTHONPATH=/src
-    entrypoint: /src/entrypoint.sh
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    depends_on:
-      - qdrant
-      - valkey-rate-limit
-      - valkey-cache
-      - auth-service
-    networks:
-      - vie-law-assistant-network
-    profiles:
-      - developer
-      - production
-
-  web-crawler-service:
-    container_name: web-crawler-service
-    build:
-      context: ./services/web-crawler-service
+      context: ./crawler
     restart: unless-stopped
     ports:
       - "8003:8003"
     volumes:
-      - ./services/web-crawler-service/app:/src/app
+      - ./crawler/app:/src/app
     environment:
       - PYTHONPATH=/src
     entrypoint: /src/entrypoint.sh
@@ -188,7 +160,7 @@ services:
       timeout: 5s
       retries: 3
     depends_on:
-      - auth-service
+      - backend
     networks:
       - vie-law-assistant-network
     profiles:
