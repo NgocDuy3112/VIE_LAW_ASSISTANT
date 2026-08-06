@@ -3,7 +3,7 @@ from modules.documents.helpers.embedding import DenseEmbeddingService
 from modules.documents.helpers.sparse_embedding import SparseEmbeddingService
 from modules.documents.helpers.documents_processor import DocumentsProcessor, calculate_content_hash
 from modules.documents.schemas.ingestion import IngestionRequest, IngestionResponse
-from log.logger import get_logger
+from agent.app.logger import get_logger
 from config import settings
 
 

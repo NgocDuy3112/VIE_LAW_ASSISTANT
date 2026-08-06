@@ -5,7 +5,7 @@ from app.schemas.message import Message
 from app.core.agent import agent_invoke
 from app.api.rate_limit import limiter
 from app.config import settings
-from app.log.logger import get_logger
+from agent.app.logger import get_logger
 # from app.db.dependencies import get_postgresql_async_session
 
 

@@ -8,7 +8,7 @@ from modules.documents.helpers.sparse_embedding import SparseEmbeddingService
 from modules.documents.helpers.extract_keywords import extract_legal_keywords
 from modules.documents.schemas.document import DocumentSchema
 from modules.documents.schemas.retrieve import RetrieveRequest, RetrieveResponse
-from log.logger import get_logger
+from agent.app.logger import get_logger
 from config import settings
 
 

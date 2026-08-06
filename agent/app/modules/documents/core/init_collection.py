@@ -3,7 +3,7 @@ from qdrant_client.models import *
 from config import settings
 
 
-from log.logger import get_logger
+from agent.app.logger import get_logger
 
 logger = get_logger(__name__)
 
