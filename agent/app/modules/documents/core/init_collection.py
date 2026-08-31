@@ -1,44 +1,37 @@
-from qdrant_client import AsyncQdrantClient
-from qdrant_client.models import *
+import asyncio
+from elasticsearch import AsyncElasticsearch
 from config import settings
-
-
-from agent.app.logger import get_logger
+from app.logger import get_logger
 
 logger = get_logger(__name__)
 
 
-
-async def init_qdrant_collection(collection_name: str = settings.QDRANT_COLLECTION_NAME) -> None:
+async def init_elasticsearch_index() -> None:
+    client = AsyncElasticsearch(settings.ELASTICSEARCH_URL)
     try:
-        client = AsyncQdrantClient(url=settings.QDRANT_CLIENT_URL)
-        collections = await client.get_collections()
-        existing = [col.name for col in collections.collections]
-
-        if collection_name not in existing:
-            logger.info(f"🔧 Creating collection '{collection_name}'")
-            await client.create_collection(
-                collection_name=collection_name,
-                vectors_config={
-                    "text-dense": VectorParams(
-                        size=settings.EMBEDDING_DIMENSION,
-                        distance=Distance.COSINE,
-                        datatype=Datatype.FLOAT16
-                    )
-                },
-                quantization_config=BinaryQuantization(
-                    binary=BinaryQuantizationConfig(
-                        encoding=BinaryQuantizationEncoding.TWO_BITS,
-                        query_encoding=BinaryQuantizationQueryEncoding.BINARY,
-                        always_ram=False,
-                    ),
-                ),
-            )
-            logger.info(f"✅ Collection '{collection_name}' created successfully")
+        # Retry until Elasticsearch is ready
+        for attempt in range(10):
+            try:
+                if await client.ping():
+                    break
+            except Exception:
+                logger.info("Waiting for Elasticsearch... (attempt %d/10)", attempt + 1)
+                await asyncio.sleep(3)
         else:
-            logger.info(f"✅ Collection '{collection_name}' already exists")
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize Qdrant collection: {e}")
-        raise
+            logger.error("Elasticsearch not available after 10 attempts")
+            return
+
+        if not await client.indices.exists(index=settings.ELASTICSEARCH_INDEX):
+            await client.indices.create(
+                index=settings.ELASTICSEARCH_INDEX,
+                mappings={"properties": {
+                    "content": {"type": "text"},
+                    "content_hash": {"type": "keyword"},
+                    "source": {"type": "keyword"},
+                    "type": {"type": "keyword"},
+                    "content_vector": {"type": "dense_vector", "dims": settings.EMBEDDING_DIMENSION, "index": True, "similarity": "cosine"},
+                }},
+            )
+            logger.info("Created Elasticsearch index '%s'", settings.ELASTICSEARCH_INDEX)
     finally:
         await client.close()

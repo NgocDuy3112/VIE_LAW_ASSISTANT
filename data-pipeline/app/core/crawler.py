@@ -7,10 +7,15 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 
 import os
+import logging
 from datetime import datetime
 
 from app.config import settings
 from app.schemas.crawler import PDFItem, CrawlerRequest, CrawlerResponse
+from app.core.downloader import PDFDownloader
+from app.core.indexer import PDFIndexer
+
+logger = logging.getLogger(__name__)
 
 
 def create_driver():
@@ -37,6 +42,7 @@ class LegalDocumentCrawler:
         self.wait = WebDriverWait(self.driver, timeout)
         self.url = url
         self.limit = limit
+        self.downloader = PDFDownloader()
 
 
     async def crawl_pdf(
@@ -84,6 +90,7 @@ class LegalDocumentCrawler:
             )
 
             results = []
+            logger.info("Crawler results loaded: url=%s", self.url)
 
             # Get counts dynamically each time to avoid stale elements
             issue_dates_count = len(self.driver.find_elements(By.CSS_SELECTOR, "span[class='issued-date']"))
@@ -109,11 +116,33 @@ class LegalDocumentCrawler:
                     issued_date=issued_date
                 ))
 
+            logger.info("Starting download/index pipeline: documents=%d", len(results))
+            indexer = PDFIndexer()
+            downloaded = []
+            for item in results:
+                local_path, error = await self.downloader.download(item.title, item.url)
+                indexed = 0
+                index_error = None
+                if local_path:
+                    try:
+                        indexed = await indexer.index_pdf(local_path)
+                    except Exception as exc:
+                        logger.exception("PDF indexing failed: path=%s", local_path)
+                        index_error = str(exc)
+                downloaded.append(item.model_copy(update={
+                    "local_path": local_path,
+                    "downloaded": local_path is not None,
+                    "download_error": error or index_error,
+                }))
+
+            await indexer.close()
+            success_count = sum(item.downloaded for item in downloaded)
+            logger.info("Crawl pipeline finished: downloaded=%d total=%d", success_count, len(downloaded))
             return CrawlerResponse(
                 status="success",
-                count=len(results),
-                data=results,
-                detail="Documents crawled successfully!"
+                count=len(downloaded),
+                data=downloaded,
+                detail=f"Crawled {len(downloaded)} documents; downloaded {success_count}."
             )
 
         except Exception as e:

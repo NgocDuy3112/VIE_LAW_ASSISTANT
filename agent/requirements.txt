@@ -7,7 +7,10 @@ pytest-asyncio==1.0.0
 pytest==8.4.1
 python-dotenv
 pyvi==0.1.1
-qdrant-client==1.15.0
-sentence-transformers==5.0.0
+elasticsearch[async]==8.19.0
+langgraph
 slowapi==0.1.9
-valkey==6.1.0
+redis[hiredis]==6.4.0
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+pyjwt==2.10.0

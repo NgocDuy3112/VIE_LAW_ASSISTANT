@@ -12,17 +12,7 @@ class ChatModel:
         self.temperature = temperature
 
     async def complete(self, messages: list[ChatMessage]) -> str:
-        if self.provider == "ollama":
-            return await self._complete_openai_compatible(
-                base_url=settings.OLLAMA_BASE_URL or "http://localhost:11434/v1",
-                messages=messages,
-            )
-        if self.provider in {"lmstudio", "lm-studio", "lm_studio"}:
-            return await self._complete_openai_compatible(
-                base_url=settings.LM_STUDIO_BASE_URL or "http://localhost:1234/v1",
-                messages=messages,
-            )
-        raise ValueError(f"Unsupported model provider without LangChain: {self.provider}")
+        return await self.response(messages)
 
     async def route(self, messages: list[ChatMessage]) -> Literal["rag", "response"]:
         prompt = [
@@ -33,17 +23,19 @@ class ChatModel:
             *messages,
         ]
         decision = (await self.complete(prompt)).strip().lower()
-        return "rag" if "rag" in decision else "response"
+        return "rag" if decision == "rag" else "response"
 
-    async def _complete_openai_compatible(self, base_url: str | None, messages: list[ChatMessage]) -> str:
-        url = (base_url or "http://localhost:1234/v1").rstrip("/") + "/chat/completions"
+    async def response(self, messages: list[ChatMessage]) -> str:
+        base_url = settings.LLM_BASE_URL
+        url = base_url.rstrip("/") + "/chat/completions"
         payload = {
             "model": self.model,
             "messages": messages,
             "temperature": self.temperature,
         }
+        headers = {"Authorization": "Bearer no-key"}
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=payload, timeout=settings.REQUEST_TIMEOUT_SECONDS) as response:
+            async with session.post(url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=settings.REQUEST_TIMEOUT_SECONDS)) as response:
                 response.raise_for_status()
                 data = await response.json()
                 return data["choices"][0]["message"]["content"]

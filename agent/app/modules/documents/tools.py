@@ -1,14 +1,11 @@
-from modules.documents.core.v1.retrieve import retriever_service
-from modules.documents.dependencies import get_async_qdrant_client, get_valkey_cache
+from modules.documents.dependencies import get_retrieval_service
 from modules.documents.schemas.retrieve import RetrieveRequest
 
 
 async def retrieve_document(query: str, top_k: int = 5) -> list[str]:
-    response = await retriever_service(
-        get_async_qdrant_client(),
-        get_valkey_cache(),
-        RetrieveRequest(query=query, top_k=top_k),
-    )
+    service = get_retrieval_service()
+    response = await service.retrieve(RetrieveRequest(query=query, top_k=top_k))
+
     if response.status == "error":
         return [response.detail or "Document retrieval failed."]
 

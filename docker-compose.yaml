@@ -1,88 +1,85 @@
 services:
-  valkey-rate-limit:
-    container_name: valkey-rate-limit
-    image: valkey/valkey:8.1.1-alpine
+  redis:
+    container_name: redis
+    image: redis:8-alpine
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
-      - ./configs/valkey-rate-limit.conf:/configs/valkey.conf
-      - ./data/valkey-rate-limit:/data
-    command: valkey-server /configs/valkey.conf
+      - ./configs/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./data/redis:/data
+    command: redis-server /usr/local/etc/redis/redis.conf
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
     networks:
-      - vie-law-assistant-network
-    profiles:
-      - testing
-      - developer
-      - production
+      - default
 
-  valkey-cache:
-    container_name: valkey-cache
-    image: valkey/valkey:8.1.1-alpine
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.0
     restart: unless-stopped
-    ports:
-      - "6380:6380"
-    volumes:
-      - ./configs/valkey-cache.conf:/configs/valkey.conf
-      - ./data/valkey-cache:/data
-    command: valkey-server /configs/valkey.conf
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    networks:
-      - vie-law-assistant-network
-    profiles:
-      - developer
-      - production
-
-  qdrant:
-    container_name: qdrant
-    image: qdrant/qdrant:v1.15.0
-    restart: unless-stopped
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - ./data/qdrant:/qdrant/storage
     environment:
-      - QDRANT__SERVICE__HTTP_PORT=6333
-      - QDRANT__SERVICE__GRPC_PORT=6334
-      - QDRANT__STORAGE__PATH=/qdrant/storage
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
     networks:
-      - vie-law-assistant-network
-    profiles:
-      - developer
-      - production
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
-  postgresql-user:
-    container_name: postgresql-user
+  postgresql-backend:
+    container_name: postgresql-backend
     image: postgres:17.5-bullseye
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: user
+      POSTGRES_USER: ${POSTGRES_BACKEND_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_BACKEND_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_BACKEND_DB}
+    env_file:
+      - configs/.env
     networks:
-      - vie-law-assistant-network
+      - default
     volumes:
-      - ./data/postgresql/user:/var/lib/postgresql/data
+      - ./data/postgresql-backend/user:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d user"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_BACKEND_USER} -d ${POSTGRES_BACKEND_DB}"]
       interval: 10s
       timeout: 10s
       retries: 5
     restart: always
-    profiles:
-      - production
-      - developer
+  
+  postgresql-agent:
+    container_name: postgresql-agent
+    image: postgres:17.5-bullseye
+    environment:
+      POSTGRES_USER: ${POSTGRES_AGENT_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_AGENT_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_AGENT_DB}
+    env_file:
+      - configs/.env
+    networks:
+      - default
+    volumes:
+      - ./data/postgresql-agent/user:/var/lib/postgresql/data
+    ports:
+      - "5433:5433"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_AGENT_USER} -d ${POSTGRES_AGENT_DB}"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
 
   backend:
     container_name: backend
@@ -90,25 +87,23 @@ services:
       context: ./backend
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "3000:3000"
     volumes:
       - ./backend/src:/src/src
       - ./backend/prisma:/src/prisma
     env_file:
-      - ./configs/.env.backend
+      - ./configs/.env
     entrypoint: /src/entrypoint.sh
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
     depends_on:
-      - postgresql-user
+      - redis
+      - postgresql-backend
     networks:
-      - vie-law-assistant-network
-    profiles:
-      - developer
-      - production
+      - default
 
   agent:
     container_name: agent
@@ -119,9 +114,7 @@ services:
       - "8001:8001"
     volumes:
       - ./agent/app:/src/app
-      - ./configs/.env.agent:/src/configs/.env
-      - ./encoders/embedding:/src/encoders/embedding
-      - ./encoders/sparse-embedding:/src/encoders/sparse-embedding
+      - ./configs/.env:/src/configs/.env
     environment:
       - ENV_FILE=/src/configs/.env
       - PYTHONPATH=/src
@@ -132,43 +125,52 @@ services:
       timeout: 5s
       retries: 3
     depends_on:
-      - valkey-rate-limit
-      - qdrant
-      - valkey-cache
+      - redis
+      - elasticsearch
+      - postgresql-agent
     networks:
-      - vie-law-assistant-network
-    profiles:
-      - testing
-      - developer
-      - production
+      - default
 
-  crawler:
-    container_name: crawler
+  data-pipeline:
+    container_name: data-pipeline
     build:
-      context: ./crawler
+      context: ./data-pipeline
     restart: unless-stopped
     ports:
-      - "8003:8003"
+      - "8001:8001"
     volumes:
-      - ./crawler/app:/src/app
+      - ./data-pipeline/app:/src/app
+      - ./configs/.env:/src/configs/.env
+      - ./data/pdfs:/src/data/pdfs
     environment:
       - PYTHONPATH=/src
+      - TZ=Asia/Ho_Chi_Minh
     entrypoint: /src/entrypoint.sh
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 10s
       timeout: 5s
       retries: 3
     depends_on:
-      - backend
+      - elasticsearch
     networks:
-      - vie-law-assistant-network
-    profiles:
-      - developer
-      - production
+      - default
 
 
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+      - agent
+    networks:
+      - default
 
 networks:
-  vie-law-assistant-network:
+  default:
     driver: bridge

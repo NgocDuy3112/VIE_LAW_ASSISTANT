@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 class PDFItem(BaseModel):
     title: str
     url: str
+    local_path: str | None = None
+    downloaded: bool = False
+    download_error: str | None = None
 
 
 

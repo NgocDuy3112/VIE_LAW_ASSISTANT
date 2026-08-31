@@ -1,8 +1,6 @@
 #!/bin/sh
 set -e
 
-# Run tests first
-# pytest --maxfail=1 --disable-warnings
+export DATABASE_URL="postgresql+asyncpg://${POSTGRES_AGENT_USER}:${POSTGRES_AGENT_PASSWORD}@postgresql-agent:5432/${POSTGRES_AGENT_DB}"
 
-# If tests pass, start the FastAPI app
 exec uvicorn app.main:app --host 0.0.0.0 --port 8001

@@ -1,17 +1,19 @@
-FROM python:3.11-alpine
+FROM python:3.11-slim
 
 WORKDIR /src
 
-# update apk repo
-RUN echo "http://dl-4.alpinelinux.org/alpine/v3.22/main" >> /etc/apk/repositories && \
-    echo "http://dl-4.alpinelinux.org/alpine/v3.22/community" >> /etc/apk/repositories
-
-ENV CHROME_BIN="/usr/bin/chromium-browser"
+ENV CHROME_BIN="/usr/bin/chromium"
 ENV CHROMEDRIVER_PATH="/usr/bin/chromedriver"
 
-# install chromedriver
-RUN apk update
-RUN apk add chromium chromium-chromedriver
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    chromium-driver \
+    tesseract-ocr \
+    tesseract-ocr-vie \
+    poppler-utils \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file first to cache dependencies
 COPY requirements.txt .
