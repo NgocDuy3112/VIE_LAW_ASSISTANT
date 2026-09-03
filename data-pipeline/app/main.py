@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.v1.crawler import crawler_router
 from app.api.health_check import health_router
@@ -29,6 +30,7 @@ app.add_middleware(
 )
 app.include_router(crawler_router)
 app.include_router(health_router, tags=["Health Check"])
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 
 @app.get("/", tags=["Root"])

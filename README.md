@@ -228,7 +228,7 @@ pytest
 
 ## TODO
 
-- [ ] Write unit tests for each service
+- [x] Write unit tests for each service (agent: pytest, data-pipeline: pytest, backend: jest)
 - [ ] Add streaming response for chat
 - [ ] Add admin dashboard for document management
 - [ ] Set up CI/CD pipeline

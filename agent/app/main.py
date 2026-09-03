@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.response import response_router
 from app.api.rate_limit import setup_rate_limit
@@ -34,6 +35,7 @@ app.include_router(response_router, tags=["Agent Response"])
 app.include_router(sessions_router)
 app.include_router(health_router, tags=["Health Check"])
 setup_rate_limit(app)
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 
 @app.get("/", tags=["Root"])
